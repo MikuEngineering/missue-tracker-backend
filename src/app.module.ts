@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { UserModule } from './user/user.module';
+import { User } from './user/user.entity';
 
 const {
   DB_HOST,
@@ -17,9 +19,10 @@ const {
       username: DB_USERNAME,
       password: DB_PASSWORD,
       database: DB_DATABASE,
-      entities: [],
+      entities: [User],
       synchronize: true,
     }),
+    UserModule,
   ],
 })
 export class AppModule {}
