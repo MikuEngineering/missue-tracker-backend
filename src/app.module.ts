@@ -2,8 +2,10 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './users/users.entity';
 import { Project } from './projects/projects.entity';
+import { Tag } from './tags/tags.entity';
 import { UsersModule } from './users/users.module';
 import { ProjectsModule } from './projects/projects.module';
+import { TagsModule } from './tags/tags.module';
 
 const {
   DB_HOST,
@@ -21,11 +23,12 @@ const {
       username: DB_USERNAME,
       password: DB_PASSWORD,
       database: DB_DATABASE,
-      entities: [User, Project],
+      entities: [User, Project, Tag],
       synchronize: true,
     }),
     UsersModule,
     ProjectsModule,
+    TagsModule,
   ],
 })
 export class AppModule {}

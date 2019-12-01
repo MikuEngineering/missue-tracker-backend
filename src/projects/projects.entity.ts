@@ -1,5 +1,6 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, OneToMany } from 'typeorm';
 import { User } from '../users/users.entity';
+import { Tag } from '../tags/tags.entity';
 
 @Entity()
 export class Project {
@@ -23,4 +24,7 @@ export class Project {
 
   @Column()
   created_time: Date;
+
+  @OneToMany(_ => Tag, tag => tag.project)
+  tags: Tag[];
 }
