@@ -6,13 +6,13 @@ export class User {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @Column()
+    @Column({ length: 180 })
     username: string;
 
     @Column()
     nickname: string;
 
-    @Column({ default: 'no-reply@example.com' })
+    @Column({ default: 'noreply@example.com' })
     email: string;
 
     @Column()
