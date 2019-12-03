@@ -12,19 +12,19 @@ export class User {
     @Column()
     nickname: string;
 
-    @Column()
+    @Column({ default: 'no-reply@example.com' })
     email: string;
 
     @Column()
     password: string;
 
-    @Column()
+    @Column({ default: 0 })
     status: number;
 
-    @Column()
+    @Column({ default: 0 })
     permission: number;
 
-    @Column()
+    @Column({ default: () => 'CURRENT_TIMESTAMP' })
     created_date: Date;
 
     @OneToMany(_ => Project, project => project.owner)
