@@ -14,11 +14,10 @@ export class UsersService {
     async register(registerUserDto: RegisterUserDto) {
         const username: string = registerUserDto.username;
         const password: string = registerUserDto.password;
+        const nickname: string = username;
 
         const user = await this.userRepository.create({
-            username,
-            password,
-            nickname: username,
+            username, password, nickname,
         });
         await this.userRepository.save(user);
     }
