@@ -12,7 +12,7 @@ export class User {
     @Column()
     nickname: string;
 
-    @Column({ default: 'no-reply@example.com' })
+    @Column({ default: 'noreply@example.com' })
     email: string;
 
     @Column()
