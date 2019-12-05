@@ -21,4 +21,8 @@ export class UsersService {
         });
         await this.userRepository.save(user);
     }
+
+    async findOne(username: string): Promise<User | undefined> {
+        return this.userRepository.findOne({ username });
+    }
 }

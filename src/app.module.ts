@@ -6,6 +6,8 @@ import { Tag } from './tags/tags.entity';
 import { UsersModule } from './users/users.module';
 import { ProjectsModule } from './projects/projects.module';
 import { TagsModule } from './tags/tags.module';
+import { AuthModule } from './auth/auth.module';
+import { SessionModule } from './session/session.module';
 
 const {
   DB_HOST,
@@ -29,6 +31,8 @@ const {
     UsersModule,
     ProjectsModule,
     TagsModule,
+    AuthModule,
+    SessionModule,
   ],
 })
 export class AppModule {}
