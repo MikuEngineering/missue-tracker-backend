@@ -6,7 +6,7 @@ export class User {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @Column({ length: 180 })
+    @Column({ length: 180, unique: true })
     username: string;
 
     @Column()
