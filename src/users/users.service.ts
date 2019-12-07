@@ -25,4 +25,8 @@ export class UsersService {
     async findOne(username: string): Promise<User | undefined> {
         return this.userRepository.findOne({ username });
     }
+
+    async findOneById(id: number): Promise<User | undefined> {
+        return this.userRepository.findOne({ id });
+    }
 }
