@@ -1,14 +1,15 @@
 version: '3'
 services:
   web:
-    build: .
-    args:
-      - PORT=${PORT:-8000}
-      - DB_HOST=${DB_HOST:-database}
-      - DB_USERNAME=${DB_USERNAME:-miku}
-      - DB_PASSWORD=${DB_PASSWORD:-mtpassword}
-      - DB_DATABASE=${DB_DATABASE:-missue_tracker}
-      - SESSION_SECRET=${SESSION_SECRET:-nest secret}
+    build:
+      context: .
+      args:
+        PORT: ${PORT:-8000}
+        DB_HOST: ${DB_HOST:-database}
+        DB_USERNAME: ${DB_USERNAME:-miku}
+        DB_PASSWORD: ${DB_PASSWORD:-mtpassword}
+        DB_DATABASE: ${DB_DATABASE:-missue_tracker}
+        SESSION_SECRET: ${SESSION_SECRET:-nest secret}
     ports:
       - "${PORT:-8000}:${PORT:-8000}"
     expose:
