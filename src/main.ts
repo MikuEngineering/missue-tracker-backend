@@ -5,7 +5,7 @@ import { AppModule } from './app.module';
 import * as session from 'express-session';
 import * as passport from 'passport';
 
-const { SESSION_SECRET } = process.env;
+const { SESSION_SECRET, PORT } = process.env;
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -22,6 +22,6 @@ async function bootstrap() {
   app.use(passport.initialize());
   app.use(passport.session());
 
-  await app.listen(3000);
+  await app.listen(Number(PORT));
 }
 bootstrap();
