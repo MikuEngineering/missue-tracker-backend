@@ -6,27 +6,27 @@ import { RegisterUserDto } from './dto/register_user.dto';
 
 @Injectable()
 export class UsersService {
-    constructor(
-        @InjectRepository(User)
-        private readonly userRepository: Repository<User>
-    ) { }
+  constructor(
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>
+  ) { }
 
-    async register(registerUserDto: RegisterUserDto) {
-        const username: string = registerUserDto.username;
-        const password: string = registerUserDto.password;
-        const nickname: string = username;
+  async register(registerUserDto: RegisterUserDto) {
+    const username: string = registerUserDto.username;
+    const password: string = registerUserDto.password;
+    const nickname: string = username;
 
-        const user = await this.userRepository.create({
-            username, password, nickname,
-        });
-        await this.userRepository.save(user);
-    }
+    const user = await this.userRepository.create({
+      username, password, nickname,
+    });
+    await this.userRepository.save(user);
+  }
 
-    async findOne(username: string): Promise<User | undefined> {
-        return this.userRepository.findOne({ username });
-    }
+  async findOne(username: string): Promise<User | undefined> {
+    return this.userRepository.findOne({ username });
+  }
 
-    async findOneById(id: number): Promise<User | undefined> {
-        return this.userRepository.findOne({ id });
-    }
+  async findOneById(id: number): Promise<User | undefined> {
+    return this.userRepository.findOne({ id });
+  }
 }
