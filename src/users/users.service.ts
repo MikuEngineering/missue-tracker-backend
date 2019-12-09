@@ -17,7 +17,7 @@ export class UsersService {
     const nickname: string = username;
 
     const user = await this.userRepository.create({
-        username, password, nickname,
+      username, password, nickname,
     });
     await this.userRepository.save(user);
   }
