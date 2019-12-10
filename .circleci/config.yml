@@ -33,8 +33,10 @@ workflows:
   build-and-deploy:
     jobs:
       - build:
-          branches:
-            only: master
+          filters:
+            branches:
+              only:
+                - master
       - deploy:
           requires:
             - build
