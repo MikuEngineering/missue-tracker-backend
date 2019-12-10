@@ -1,0 +1,29 @@
+version: '3'
+services:
+  web:
+    build:
+      context: .
+      args:
+        PORT: ${PORT:-8000}
+        DB_HOST: ${DB_HOST:-database}
+        DB_USERNAME: ${DB_USERNAME:-miku}
+        DB_PASSWORD: ${DB_PASSWORD:-mtpassword}
+        DB_DATABASE: ${DB_DATABASE:-missue_tracker}
+        SESSION_SECRET: ${SESSION_SECRET:-nest secret}
+    ports:
+      - "${PORT:-8000}:${PORT:-8000}"
+    expose:
+      - ${PORT:-8000}
+    depends_on:
+      - database
+  database:
+    image: mariadb
+    environment:
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD:-rootpassword}
+      - MYSQL_USER=${DB_USERNAME:-miku}
+      - MYSQL_PASSWORD=${DB_PASSWORD:-mtpassword}
+      - MYSQL_DATABASE=${DB_DATABASE:-missue_tracker}
+    ports:
+      - "3306:3306"
+    expose:
+      - 3306
