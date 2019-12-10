@@ -1,3 +1,4 @@
+# Use CircleCI Version 2
 version: 2
 jobs:
   build:
