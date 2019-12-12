@@ -117,4 +117,10 @@ describe('UsersService', () => {
     expect(user.permission).toEqual(expected.permission);
     expect(user.projects).toEqual(expected.projects);
   });
+
+  it('should be able to find a user by a username', async () => {
+    const user = await service.findOne('Test1234');
+    expect(user).toBeDefined();
+    expect(user.id).toEqual(1);
+  });
 });
