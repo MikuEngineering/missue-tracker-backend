@@ -27,22 +27,4 @@ describe('Users Controller', () => {
   it('should be defined', () => {
     expect(controller).toBeDefined();
   });
-
-  it('should give the correct data when calling register', async () => {
-    const expected: RegisterUserDto = {
-      username: 'SomeoneUsername',
-      password: 'SomeonePassword'
-    };
-
-    // Expect the controller passes the user data to the service.
-    service.register = jest.fn(async (user: RegisterUserDto) => {
-      expect(user.username).toEqual(expected.username);
-      expect(user.password).toEqual(expected.password);
-    });
-
-    await controller.register({
-      username: expected.username,
-      password: expected.password
-    });
-  });
 });
