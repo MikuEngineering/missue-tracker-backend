@@ -4,7 +4,6 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import * as request from 'supertest';
 import { UsersModule } from '../src/users/users.module';
 import { UsersService } from '../src/users/users.service';
-import { UsersController } from '../src/users/users.controller';
 import { RegisterUserDto } from '../src/users/dto/register_user.dto';
 import { User } from '../src/users/users.entity';
 

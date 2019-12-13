@@ -1,13 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
-import { RegisterUserDto } from './dto/register_user.dto';
 import { UsersModule } from './users.module';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { User } from './users.entity';
 
 describe('Users Controller', () => {
-  let service: UsersService;
   let controller: UsersController;
 
   beforeEach(async () => {
@@ -20,7 +18,6 @@ describe('Users Controller', () => {
     .useValue({}) // Implementation of methods to be mocked are left to each test case.
     .compile();
 
-    service = module.get<UsersService>(UsersService);
     controller = module.get<UsersController>(UsersController);
   });
 
