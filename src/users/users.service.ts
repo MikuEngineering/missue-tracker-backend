@@ -11,15 +11,22 @@ export class UsersService {
     private readonly userRepository: Repository<User>
   ) { }
 
-  async register(registerUserDto: RegisterUserDto) {
+  async register(registerUserDto: RegisterUserDto): Promise<boolean> {
     const username: string = registerUserDto.username;
     const password: string = registerUserDto.password;
     const nickname: string = username;
 
-    const user = await this.userRepository.create({
+    const user = await this.userRepository.findOne({ username });
+    if (user) {
+      return false;
+    }
+
+    const newUser = await this.userRepository.create({
       username, password, nickname,
     });
-    await this.userRepository.save(user);
+    await this.userRepository.save(newUser);
+
+    return true;
   }
 
   async findOne(username: string): Promise<User | undefined> {
