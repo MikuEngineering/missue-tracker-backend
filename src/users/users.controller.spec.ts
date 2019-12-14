@@ -1,13 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
-import { RegisterUserDto } from './dto/register_user.dto';
 import { UsersModule } from './users.module';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { User } from './users.entity';
 
 describe('Users Controller', () => {
-  let service: UsersService;
   let controller: UsersController;
 
   beforeEach(async () => {
@@ -20,29 +18,10 @@ describe('Users Controller', () => {
     .useValue({}) // Implementation of methods to be mocked are left to each test case.
     .compile();
 
-    service = module.get<UsersService>(UsersService);
     controller = module.get<UsersController>(UsersController);
   });
 
   it('should be defined', () => {
     expect(controller).toBeDefined();
-  });
-
-  it('should give the correct data when calling register', async () => {
-    const expected: RegisterUserDto = {
-      username: 'SomeoneUsername',
-      password: 'SomeonePassword'
-    };
-
-    // Expect the controller passes the user data to the service.
-    service.register = jest.fn(async (user: RegisterUserDto) => {
-      expect(user.username).toEqual(expected.username);
-      expect(user.password).toEqual(expected.password);
-    });
-
-    await controller.register({
-      username: expected.username,
-      password: expected.password
-    });
   });
 });

@@ -102,8 +102,9 @@ describe('UsersService', () => {
     expected.permission = 0;
     expected.projects = [];
 
-    await service.register({ username: 'Another', password: 'somepassword' });
+    const result = await service.register({ username: 'Another', password: 'somepassword' });
     expect(mockStorage.length).toEqual(2);
+    expect(result).toBeTruthy();
 
     const user = mockStorage.find(user => user.id === expected.id);
     expect(user).toBeTruthy();
@@ -115,6 +116,12 @@ describe('UsersService', () => {
     expect(user.status).toEqual(expected.status);
     expect(user.permission).toEqual(expected.permission);
     expect(user.projects).toEqual(expected.projects);
+  });
+
+  it('should be unable to add a new user due to the conflict', async () => {
+    const result = await service.register({ username: 'Test1234', password: 'doesntmatter' });
+    expect(result).toBeFalsy();
+    expect(mockStorage.length).toEqual(1);
   });
 
   it('should be able to find a user by a username', async () => {
