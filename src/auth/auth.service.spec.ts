@@ -32,7 +32,7 @@ describe('AuthService', () => {
     })
     .overrideProvider(UsersService)
     .useValue({
-      findOne: async (username: string) => {
+      findOneByUsername: async (username: string) => {
         return mockedStorage.find(user => user.username === username);
       }
     })
