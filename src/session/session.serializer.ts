@@ -18,7 +18,7 @@ export class SessionSerializer extends PassportSerializer {
   }
 
   deserializeUser(id: number, done: DoneDeserialization) {
-    this.usersService.findOneById(id)
+    this.usersService.findOne(id)
       .then((user) => {
 
         if (!user) {
