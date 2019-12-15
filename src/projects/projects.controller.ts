@@ -4,6 +4,7 @@ import { CreateProjectDto } from './dto/create-project.dto';
 import { ProjectsService } from './projects.service';
 import { User } from '../users/users.entity';
 import { AuthenticatedGuard } from '../common/guards/authenticated.guard';
+import { ValidationPipe } from '../common/pipes/validation.pipe';
 
 @Controller('projects')
 export class ProjectsController {
@@ -12,7 +13,7 @@ export class ProjectsController {
   @UseGuards(AuthenticatedGuard)
   @Post()
   async create(
-    @Body() createProjectDto: CreateProjectDto,
+    @Body(ValidationPipe) createProjectDto: CreateProjectDto,
     @Request() request: ExpressRequest,
     @Response() response: ExpressResponse,
   ) {
