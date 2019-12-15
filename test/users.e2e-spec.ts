@@ -4,7 +4,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import * as request from 'supertest';
 import { UsersModule } from '../src/users/users.module';
 import { UsersService } from '../src/users/users.service';
-import { RegisterUserDto } from '../src/users/dto/register_user.dto';
+import { RegisterUserDto } from '../src/users/dto/register-user.dto';
 import { User } from '../src/users/users.entity';
 
 describe('UsersController (e2e)', () => {
@@ -15,7 +15,7 @@ describe('UsersController (e2e)', () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [UsersModule],
     })
-    .overrideProvider(getRepositoryToken(User)) 
+    .overrideProvider(getRepositoryToken(User))
     .useValue({}) // Since focusing on testing UsersController, implement nothing for the repository to get rid of the dependency problem.
     .overrideProvider(UsersService)
     .useValue({}) // Implementation of methods to be mocked are left to each test case.
@@ -33,7 +33,7 @@ describe('UsersController (e2e)', () => {
         username: 'SomeoneUsername',
         password: 'SomeonePassword'
       };
-  
+
       // Expect the controller passes the user data to the service.
       service.register = jest.fn(async (user: RegisterUserDto): Promise<boolean> => {
         expect(user.username).toEqual(expected.username);
