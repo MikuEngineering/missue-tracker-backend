@@ -5,22 +5,11 @@ import { User } from './users.entity';
 import { Project } from '../projects/projects.entity';
 import { UsersModule } from './users.module';
 
-interface IUser {
-  id?: number;
-  username?: string;
-  nickname?: string;
-  email?: string;
-  password?: string;
-  status?: number;
-  permission?: number;
-  created_date?: Date;
-  projects?: Project[];
-}
 
 describe('UsersService', () => {
   let service: UsersService;
 
-  let mockStorage: IUser[];
+  let mockStorage: User[];
 
   function initializeMockStorage() {
     const defaultUser = new User();
@@ -43,7 +32,7 @@ describe('UsersService', () => {
     })
     .overrideProvider(getRepositoryToken(User))
     .useValue({
-      create: async (user: IUser) => {
+      create: async (user: User) => {
         const newUser = new User();
         const largestId = mockStorage.reduce((largest, user) => user.id > largest ? user.id : largest ,0);
         newUser.id = largestId + 1;
@@ -57,7 +46,7 @@ describe('UsersService', () => {
         newUser.projects = [];
         return newUser;
       },
-      save: async (user: IUser) => {
+      save: async (user: User) => {
         const index = mockStorage.findIndex(item => item.id === user.id);
         if (index < 0) {
           mockStorage.push(user);
@@ -65,7 +54,7 @@ describe('UsersService', () => {
         }
         mockStorage[index] = user;
       },
-      findOne: async (condition: IUser) => {
+      findOne: async (condition: User) => {
         const keys = Object.keys(condition);
 
         const result = mockStorage.find((user) => {
