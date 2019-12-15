@@ -13,6 +13,11 @@ export class AuthenticatedGuard implements CanActivate {
     const classSignature = context.getClass();
     const method = context.getHandler();
 
-    throw new UnauthorizedException();
+    if (classSignature === SessionController && method.name === 'checkLogin') {
+      throw new NotFoundException();
+    }
+    else {
+      throw new UnauthorizedException();
+    }
   }
 }
