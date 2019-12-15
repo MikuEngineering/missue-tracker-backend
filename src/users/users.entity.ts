@@ -1,6 +1,17 @@
 import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
 import { Project } from '../projects/projects.entity';
 
+enum Status {
+  Normal = 0,
+  Banned,
+}
+
+enum Permission {
+  User = 0,
+  Admin,
+}
+
+
 @Entity()
 export class User {
   @PrimaryGeneratedColumn()
@@ -18,10 +29,10 @@ export class User {
   @Column()
   password: string;
 
-  @Column({ default: 0 })
+  @Column({ default: Status.Normal })
   status: number;
 
-  @Column({ default: 0 })
+  @Column({ default: Permission.User })
   permission: number;
 
   @Column({ default: () => 'CURRENT_TIMESTAMP' })
