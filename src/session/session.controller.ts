@@ -11,8 +11,7 @@ export class SessionController {
 
   @UseGuards(LoginGuard)
   @Post()
-  async login() {
-  }
+  async login() { }
 
   @Delete()
   async logout(@Request() req: ExpressRequest) {
