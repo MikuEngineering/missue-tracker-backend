@@ -13,6 +13,7 @@ export class SessionController {
   @Post()
   async login() { }
 
+  @UseGuards(AuthenticatedGuard)
   @Delete()
   async logout(@Request() req: ExpressRequest) {
     req.logout();
