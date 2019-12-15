@@ -119,7 +119,7 @@ describe('UsersService', () => {
   });
 
   it('should be able to find a user by an id', async () => {
-    const user = await service.findOneById(1);
+    const user = await service.findOne(1);
     expect(user).toBeDefined();
     expect(user.username).toEqual('Test1234');
   });
