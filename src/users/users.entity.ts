@@ -1,12 +1,12 @@
 import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
 import { Project } from '../projects/projects.entity';
 
-enum Status {
+export enum Status {
   Normal = 0,
   Banned,
 }
 
-enum Permission {
+export enum Permission {
   User = 0,
   Admin,
 }

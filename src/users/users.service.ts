@@ -38,10 +38,16 @@ export class UsersService {
     return this.userRepository.findOne({ id });
   }
 
-  async updateProfile(updateProfileDto: UpdateProfileDto, userId: number) {
+  async updateProfile(updateProfileDto: UpdateProfileDto, userId: number): Promise<boolean> {
+    if (await this.userRepository.count({ id: userId }) === 0) {
+      return false;
+    }
+
     await this.userRepository.update({ id: userId }, {
       nickname: updateProfileDto.nickname,
       autobiography: updateProfileDto.autobiography,
     });
+
+    return true;
   }
 }
