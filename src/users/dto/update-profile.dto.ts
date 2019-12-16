@@ -1,6 +1,6 @@
 import { MaxLength } from 'class-validator';
 
-export class RegisterUserDto {
+export class UpdateProfileDto {
   @MaxLength(180)
   readonly nickname: string = '';
 
