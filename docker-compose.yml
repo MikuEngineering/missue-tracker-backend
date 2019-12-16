@@ -10,6 +10,8 @@ services:
         DB_PASSWORD: ${DB_PASSWORD:-mtpassword}
         DB_DATABASE: ${DB_DATABASE:-missue_tracker}
         SESSION_SECRET: ${SESSION_SECRET:-nest secret}
+    environment:
+      WAIT_HOSTS: database:3306
     ports:
       - "${PORT:-8000}:${PORT:-8000}"
     expose:
