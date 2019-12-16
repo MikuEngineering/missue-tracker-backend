@@ -5,5 +5,5 @@ export class UpdateProfileDto {
   readonly nickname: string = '';
 
   @MaxLength(250)
-  readonly biology: string = '';
+  readonly autobiography: string = '';
 }

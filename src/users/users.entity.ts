@@ -24,7 +24,7 @@ export class User {
   nickname: string;
 
   @Column()
-  biology: string;
+  autobiography: string;
 
   @Column({ default: 'noreply@example.com' })
   email: string;
