@@ -20,8 +20,11 @@ export class User {
   @Column({ length: 180, unique: true })
   username: string;
 
-  @Column()
+  @Column({ length: 180 })
   nickname: string;
+
+  @Column()
+  biology: string;
 
   @Column({ default: 'noreply@example.com' })
   email: string;
