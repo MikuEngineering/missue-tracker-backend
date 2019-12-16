@@ -1,5 +1,4 @@
 import { ExecutionContext, Injectable, CanActivate, NotFoundException, UnauthorizedException } from '@nestjs/common';
-import { SessionController } from '../../session/session.controller';
 
 @Injectable()
 export class AuthenticatedGuard implements CanActivate {
@@ -13,7 +12,7 @@ export class AuthenticatedGuard implements CanActivate {
     const classSignature = context.getClass();
     const method = context.getHandler();
 
-    if (classSignature === SessionController && method.name === 'checkLogin') {
+    if (classSignature.name === 'SessionController' && method.name === 'checkLogin') {
       throw new NotFoundException();
     }
     else {
