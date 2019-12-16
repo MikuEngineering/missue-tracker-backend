@@ -5,6 +5,7 @@ import { RegisterUserDto } from './dto/register-user.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { AuthenticatedGuard } from '../common/guards/authenticated.guard';
 import { ValidationPipe } from '../common/pipes/validation.pipe'
+import { IdValidationPipe } from '../common/pipes/id-validation.pipe';
 
 @Controller('users')
 export class UsersController {
@@ -23,7 +24,7 @@ export class UsersController {
   @Patch(':id')
   async updateProfile(
     @Body(ValidationPipe) updateProfileDto: UpdateProfileDto,
-    @Param('id') userId: number
+    @Param('id', IdValidationPipe) userId: number
   ) {
     await this.usersService.updateProfile(updateProfileDto, userId);
   }
