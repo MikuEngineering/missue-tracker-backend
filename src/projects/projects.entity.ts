@@ -2,6 +2,16 @@ import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, OneToMany } from 'ty
 import { User } from '../users/users.entity';
 import { Tag } from '../tags/tags.entity';
 
+export enum Privacy {
+  Public = 0,
+  Private,
+};
+
+export enum Status {
+  Normal = 0,
+  Deleted,
+};
+
 @Entity()
 export class Project {
   @PrimaryGeneratedColumn()
@@ -19,10 +29,10 @@ export class Project {
   @Column()
   privacy: number;
 
-  @Column()
+  @Column({ default: Status.Normal })
   status: number;
 
-  @Column()
+  @Column({ default: () => 'CURRENT_TIMESTAMP' })
   created_time: Date;
 
   @OneToMany(_ => Tag, tag => tag.project)
