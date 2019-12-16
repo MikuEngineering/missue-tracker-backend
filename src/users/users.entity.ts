@@ -23,7 +23,7 @@ export class User {
   @Column({ length: 180 })
   nickname: string;
 
-  @Column()
+  @Column({ default: '' })
   autobiography: string;
 
   @Column({ default: 'noreply@example.com' })

@@ -1,7 +1,10 @@
-import { Controller, Post, Body, Response, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Body, Param , Response, HttpStatus, Patch, UseGuards } from '@nestjs/common';
 import { Response as ExpressResponse } from 'express';
 import { UsersService } from './users.service';
 import { RegisterUserDto } from './dto/register-user.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
+import { AuthenticatedGuard } from '../common/guards/authenticated.guard';
+import { ValidationPipe } from '../common/pipes/validation.pipe'
 
 @Controller('users')
 export class UsersController {
@@ -14,5 +17,14 @@ export class UsersController {
       response.status(HttpStatus.CREATED).send();
     }
     response.status(HttpStatus.CONFLICT).send();
+  }
+
+  @UseGuards(AuthenticatedGuard)
+  @Patch(':id')
+  async updateProfile(
+    @Body(ValidationPipe) updateProfileDto: UpdateProfileDto,
+    @Param('id') userId: number
+  ) {
+    await this.usersService.updateProfile(updateProfileDto, userId);
   }
 }
