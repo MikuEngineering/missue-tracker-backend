@@ -1,7 +1,13 @@
-import { Controller, Post, Body, Response, HttpStatus, Get, Param } from '@nestjs/common';
-import { Response as ExpressResponse } from 'express';
+import { Controller, Get, Post, Patch, Body, Param , Response, Request, HttpStatus, UseGuards, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { Request as ExpressRequest, Response as ExpressResponse } from 'express';
 import { UsersService } from './users.service';
+import { Permission } from './users.entity';
 import { RegisterUserDto } from './dto/register-user.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
+import { AuthenticatedGuard } from '../common/guards/authenticated.guard';
+import { ValidationPipe } from '../common/pipes/validation.pipe'
+import { IdValidationPipe } from '../common/pipes/id-validation.pipe';
+import { SessionUser } from '../common/types/session-user.type';
 
 @Controller('users')
 export class UsersController {
@@ -12,15 +18,36 @@ export class UsersController {
     const result = await this.usersService.register(registerUserDto);
     if (result) {
       response.status(HttpStatus.CREATED).send();
+      return;
     }
     response.status(HttpStatus.CONFLICT).send();
   }
 
+  @UseGuards(AuthenticatedGuard)
+  @Patch(':id')
+  async updateProfile(
+    @Body(ValidationPipe) updateProfileDto: UpdateProfileDto,
+    @Param('id', IdValidationPipe) userId: number,
+    @Request() request: ExpressRequest,
+  ) {
+    const user: SessionUser = request.user as SessionUser;
+
+    if (user.id !== userId && user.permission !== Permission.Admin) {
+      throw new ForbiddenException()
+    }
+
+    const result = await this.usersService.updateProfile(updateProfileDto, userId);
+    if (!result) {
+      throw new NotFoundException();
+    }
+  }
+
   @Get(':id')
-  async getProfile(@Param() id: number, @Response() response: ExpressResponse) {
+  async getProfile(@Param('id', IdValidationPipe) id: number, @Response() response: ExpressResponse) {
     const user = await this.usersService.findOne(id);
     if (!user) {
       response.status(HttpStatus.NOT_FOUND).send();
+      return;
     }
     response.status(HttpStatus.OK).send({
       username: user.username,

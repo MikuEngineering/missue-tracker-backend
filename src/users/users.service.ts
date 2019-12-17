@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './users.entity';
 import { Repository } from 'typeorm';
 import { RegisterUserDto } from './dto/register-user.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 
 @Injectable()
 export class UsersService {
@@ -35,5 +36,18 @@ export class UsersService {
 
   async findOne(id: number): Promise<User> {
     return this.userRepository.findOne({ id });
+  }
+
+  async updateProfile(updateProfileDto: UpdateProfileDto, userId: number): Promise<boolean> {
+    if (await this.userRepository.count({ id: userId }) === 0) {
+      return false;
+    }
+
+    await this.userRepository.update({ id: userId }, {
+      nickname: updateProfileDto.nickname,
+      autobiography: updateProfileDto.autobiography,
+    });
+
+    return true;
   }
 }

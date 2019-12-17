@@ -1,12 +1,12 @@
 import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
 import { Project } from '../projects/projects.entity';
 
-enum Status {
+export enum Status {
   Normal = 0,
   Banned,
 }
 
-enum Permission {
+export enum Permission {
   User = 0,
   Admin,
 }
@@ -20,8 +20,11 @@ export class User {
   @Column({ length: 180, unique: true })
   username: string;
 
-  @Column()
+  @Column({ length: 180 })
   nickname: string;
+
+  @Column({ default: '' })
+  autobiography: string;
 
   @Column({ default: 'noreply@example.com' })
   email: string;
