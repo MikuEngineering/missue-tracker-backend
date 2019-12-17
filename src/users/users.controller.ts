@@ -1,4 +1,20 @@
-import { Controller, Get, Post, Patch, Body, Param , Response, Request, HttpStatus, UseGuards, ForbiddenException, NotFoundException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Body,
+  Param,
+  Query,
+  Response,
+  Request,
+  HttpStatus,
+  UseGuards,
+  BadRequestException,
+  ForbiddenException,
+  NotFoundException
+} from '@nestjs/common';
+
 import { Request as ExpressRequest, Response as ExpressResponse } from 'express';
 import { UsersService } from './users.service';
 import { Permission } from './users.entity';
@@ -12,6 +28,25 @@ import { SessionUser } from '../common/types/session-user.type';
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) { }
+
+  @Get()
+  async readUsers(@Query('username') username: string) {
+    if (!username) {
+      throw new BadRequestException({
+        type: 'query',
+        field: ['username'],
+        code: 'isNotEmpty',
+        username: 'The query parameter username must not be empty.'
+      });
+    }
+
+    const user = await this.usersService.findOneByUsername(username);
+    if (!user) {
+      throw new NotFoundException();
+    }
+
+    return { id: user.id };
+  }
 
   @Post()
   async register(@Body() registerUserDto: RegisterUserDto, @Response() response: ExpressResponse) {
