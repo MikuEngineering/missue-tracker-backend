@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Param , Response, HttpStatus, Patch, UseGuards, Request, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Body, Param , Response, Request, HttpStatus, UseGuards, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { Request as ExpressRequest, Response as ExpressResponse } from 'express';
 import { UsersService } from './users.service';
 import { Permission } from './users.entity';
@@ -18,6 +18,7 @@ export class UsersController {
     const result = await this.usersService.register(registerUserDto);
     if (result) {
       response.status(HttpStatus.CREATED).send();
+      return;
     }
     response.status(HttpStatus.CONFLICT).send();
   }
@@ -39,5 +40,21 @@ export class UsersController {
     if (!result) {
       throw new NotFoundException();
     }
+  }
+
+  @Get(':id')
+  async getProfile(@Param('id', IdValidationPipe) id: number, @Response() response: ExpressResponse) {
+    const user = await this.usersService.findOne(id);
+    if (!user) {
+      response.status(HttpStatus.NOT_FOUND).send();
+      return;
+    }
+    response.status(HttpStatus.OK).send({
+      username: user.username,
+      nickname: user.nickname,
+      email: user.email,
+      autobiography: user.autobiography,
+      permission: user.permission,
+    });
   }
 }
