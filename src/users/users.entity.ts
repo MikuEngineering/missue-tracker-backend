@@ -32,9 +32,6 @@ export class User {
   @Column()
   password: string;
 
-  @Column()
-  autobiography: string;
-
   @Column({ default: Status.Normal })
   status: number;
 
