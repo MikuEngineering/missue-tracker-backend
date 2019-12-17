@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { User } from './users.entity';
+import { User, Status } from './users.entity';
 import { Repository } from 'typeorm';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
@@ -39,7 +39,7 @@ export class UsersService {
   }
 
   async updateProfile(updateProfileDto: UpdateProfileDto, userId: number): Promise<boolean> {
-    if (await this.userRepository.count({ id: userId }) === 0) {
+    if (!(await this.checkUserExistenceById(userId))) {
       return false;
     }
 
@@ -49,5 +49,19 @@ export class UsersService {
     });
 
     return true;
+  }
+
+  async banUserById(userId: number): Promise<boolean> {
+    if (!(await this.checkUserExistenceById(userId))) {
+      return false;
+    }
+
+    await this.userRepository.update({ id: userId }, { status: Status.Banned });
+    return true;
+  }
+
+  private async checkUserExistenceById(userId: number): Promise<boolean> {
+    const count = await this.userRepository.count({ id: userId });
+    return count > 0;
   }
 }

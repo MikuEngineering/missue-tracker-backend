@@ -5,6 +5,7 @@ import { Permission } from './users.entity';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { AuthenticatedGuard } from '../common/guards/authenticated.guard';
+import { AdminGuard } from '../common/guards/admin.guard';
 import { ValidationPipe } from '../common/pipes/validation.pipe'
 import { IdValidationPipe } from '../common/pipes/id-validation.pipe';
 import { SessionUser } from '../common/types/session-user.type';
@@ -56,5 +57,14 @@ export class UsersController {
       autobiography: user.autobiography,
       permission: user.permission,
     });
+  }
+
+  @UseGuards(AuthenticatedGuard, AdminGuard)
+  @Post(':id/ban')
+  async banUser(@Param('id', IdValidationPipe) userId: number) {
+    const result = await this.usersService.banUserById(userId);
+    if (!result) {
+      throw new NotFoundException();
+    }
   }
 }
