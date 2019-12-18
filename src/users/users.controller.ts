@@ -10,7 +10,7 @@ import {
   Request,
   HttpStatus,
   UseGuards,
-  BadRequestException,
+  UnauthorizedException,
   ForbiddenException,
   NotFoundException
 } from '@nestjs/common';
@@ -32,12 +32,7 @@ export class UsersController {
   @Get()
   async readUsers(@Query('username') username: string) {
     if (!username) {
-      throw new BadRequestException({
-        type: 'query',
-        field: ['username'],
-        code: 'isNotEmpty',
-        username: 'The query parameter username must not be empty.'
-      });
+      throw new UnauthorizedException();
     }
 
     const user = await this.usersService.findOneByUsername(username);
