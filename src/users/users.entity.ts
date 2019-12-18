@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, OneToMany, ManyToMany, JoinTable } from 'typeorm';
 import { Project } from '../projects/projects.entity';
 
 export enum Status {
@@ -42,5 +42,9 @@ export class User {
   created_date: Date;
 
   @OneToMany(_ => Project, project => project.owner)
-  projects: Project[];
+  ownedProjects: Project[];
+
+  @ManyToMany(_ => Project, project => project.participants)
+  @JoinTable()
+  participatingProjects: Project[];
 }

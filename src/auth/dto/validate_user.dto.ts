@@ -8,5 +8,6 @@ export class ValidateUserDto {
   status: number;
   permission: number;
   created_date: Date;
-  projects: Project[];
+  ownedProjects: Project[];
+  participatingProjects: Project[];
 }
