@@ -1,10 +1,13 @@
-import { Controller, Body, Post, Request, Response, UseGuards, HttpStatus } from '@nestjs/common';
-import { Request as ExpressRequest, Response as ExpressResponse } from 'express';
+import { Controller, Body, Post, Delete, Request, Response, Param, UseGuards, HttpStatus, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { Request as ExpressRequest, Response as ExpressResponse, response } from 'express';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { ProjectsService } from './projects.service';
 import { User } from '../users/users.entity';
 import { AuthenticatedGuard } from '../common/guards/authenticated.guard';
 import { ValidationPipe } from '../common/pipes/validation.pipe';
+import { IdValidationPipe } from '../common/pipes/id-validation.pipe';
+import { SessionUser } from '../common/types/session-user.type';
+import { OperationResult } from '../common/types/operation-result.type';
 
 @Controller('projects')
 export class ProjectsController {
@@ -24,5 +27,26 @@ export class ProjectsController {
       return;
     }
     response.status(HttpStatus.CONFLICT).send();
+  }
+
+  @UseGuards(AuthenticatedGuard)
+  @Delete(':id')
+  async deleteProject(
+    @Param('id', IdValidationPipe) projectId: number,
+    @Request() request: ExpressRequest,
+    @Response() response: ExpressResponse
+  ) {
+    const { id: userId, permission } = request.user as SessionUser;
+    const result = await this.projectsService.deleteProjectById(projectId, userId, permission);
+
+    if (result === OperationResult.NotFound) {
+      throw new NotFoundException();
+    }
+
+    if (result === OperationResult.Forbidden) {
+      throw new ForbiddenException();
+    }
+
+    response.status(HttpStatus.NO_CONTENT).send();
   }
 }
