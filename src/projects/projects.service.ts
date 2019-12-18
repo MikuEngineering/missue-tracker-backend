@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Project } from './projects.entity';
+import { Project, Status } from './projects.entity';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { User } from '../users/users.entity';
 import { TagsService } from '../tags/tags.service';
-import { Tag } from '../tags/tags.entity';
+import { OperationResult } from '../common/types/operation-result.type';
 
 @Injectable()
 export class ProjectsService {
@@ -37,5 +37,20 @@ export class ProjectsService {
     await this.tagsService.createMany(createProjectDto.tags, newProject.id);
 
     return true;
+  }
+
+  async deleteProjectById(projectId: number, userId: number): Promise<OperationResult> {
+    const project = await this.projectRepository.findOne(projectId, { select: ['id', 'owner'], relations: ['owner'] });
+
+    if (!project) {
+      return OperationResult.NotFound;
+    }
+
+    if (project.owner.id !== userId) {
+      return OperationResult.Forbidden;
+    }
+
+    await this.projectRepository.update(projectId, { status: Status.Deleted });
+    return OperationResult.Success;
   }
 }
