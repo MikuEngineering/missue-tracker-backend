@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, OneToMany } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, OneToMany, ManyToMany } from 'typeorm';
 import { User } from '../users/users.entity';
 import { Tag } from '../tags/tags.entity';
 
@@ -17,7 +17,7 @@ export class Project {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ManyToOne(_ => User, user => user.projects, { cascade: true, nullable: false })
+  @ManyToOne(_ => User, user => user.ownedProjects, { cascade: true, nullable: false })
   owner: User;
 
   @Column()
@@ -37,4 +37,7 @@ export class Project {
 
   @OneToMany(_ => Tag, tag => tag.project)
   tags: Tag[];
+
+  @ManyToMany(_ => User, user => user.participatingProjects)
+  participants: User[];
 }
