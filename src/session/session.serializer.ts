@@ -1,7 +1,7 @@
 import { PassportSerializer } from '@nestjs/passport';
 import { Injectable } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
-import { ValidateUserDto } from '../auth/dto/validate_user.dto';
+import { ValidateUserDto } from '../auth/dto/validate-user.dto';
 
 type DoneSerialization = (err: Error, id: number) => void;
 
