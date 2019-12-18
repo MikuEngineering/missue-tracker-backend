@@ -36,8 +36,8 @@ export class ProjectsController {
     @Request() request: ExpressRequest,
     @Response() response: ExpressResponse
   ) {
-    const { id: userId } = request.user as SessionUser;
-    const result = await this.projectsService.deleteProjectById(projectId, userId);
+    const { id: userId, permission } = request.user as SessionUser;
+    const result = await this.projectsService.deleteProjectById(projectId, userId, permission);
 
     if (result === OperationResult.NotFound) {
       throw new NotFoundException();

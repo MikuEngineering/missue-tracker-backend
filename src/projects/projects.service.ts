@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Project, Status } from './projects.entity';
 import { CreateProjectDto } from './dto/create-project.dto';
-import { User } from '../users/users.entity';
+import { User, Permission } from '../users/users.entity';
 import { TagsService } from '../tags/tags.service';
 import { OperationResult } from '../common/types/operation-result.type';
 
@@ -39,14 +39,14 @@ export class ProjectsService {
     return true;
   }
 
-  async deleteProjectById(projectId: number, userId: number): Promise<OperationResult> {
+  async deleteProjectById(projectId: number, userId: number, permission: Permission): Promise<OperationResult> {
     const project = await this.projectRepository.findOne(projectId, { select: ['id', 'owner'], relations: ['owner'] });
 
     if (!project) {
       return OperationResult.NotFound;
     }
 
-    if (project.owner.id !== userId) {
+    if (permission !== Permission.Admin && project.owner.id !== userId) {
       return OperationResult.Forbidden;
     }
 
