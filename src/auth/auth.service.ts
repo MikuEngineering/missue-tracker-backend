@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { Status } from '../users/users.entity';
-import { ValidateUserDto } from './dto/validate_user.dto';
+import { ValidateUserDto } from './dto/validate-user.dto';
 import { LoginResult } from '../common/types/login-result.type';
 
 @Injectable()
