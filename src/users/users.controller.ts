@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Patch,
+  Delete,
   Body,
   Param,
   Query,
@@ -14,7 +15,6 @@ import {
   ForbiddenException,
   NotFoundException
 } from '@nestjs/common';
-
 import { Request as ExpressRequest, Response as ExpressResponse } from 'express';
 import { UsersService } from './users.service';
 import { Permission } from './users.entity';
@@ -96,5 +96,16 @@ export class UsersController {
     if (!result) {
       throw new NotFoundException();
     }
+  }
+
+  @UseGuards(AuthenticatedGuard, AdminGuard)
+  @Delete(':id/ban')
+  async unbanUser(@Param('id', IdValidationPipe) userId: number, @Response() response: ExpressResponse) {
+    const result = await this.usersService.unbanUserById(userId);
+    if (!result) {
+      throw new NotFoundException();
+    }
+
+    response.status(HttpStatus.NO_CONTENT).send();
   }
 }

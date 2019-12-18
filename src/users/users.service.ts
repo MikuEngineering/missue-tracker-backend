@@ -60,6 +60,15 @@ export class UsersService {
     return true;
   }
 
+  async unbanUserById(userId: number): Promise<boolean> {
+    if (!(await this.checkUserExistenceById(userId))) {
+      return false;
+    }
+
+    await this.userRepository.update({ id: userId }, { status: Status.Normal });
+    return true;
+  }
+
   private async checkUserExistenceById(userId: number): Promise<boolean> {
     const count = await this.userRepository.count({ id: userId });
     return count > 0;
