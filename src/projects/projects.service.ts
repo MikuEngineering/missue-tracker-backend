@@ -1,8 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Project, Status } from './projects.entity';
+import { Project, Status, Privacy } from './projects.entity';
 import { CreateProjectDto } from './dto/create-project.dto';
+import { ReadProjectDto } from './dto/read-project.dto';
 import { User, Permission } from '../users/users.entity';
 import { TagsService } from '../tags/tags.service';
 import { OperationResult } from '../common/types/operation-result.type';
@@ -38,6 +39,26 @@ export class ProjectsService {
     await this.tagsService.createMany(createProjectDto.tags, newProject.id);
 
     return true;
+  }
+
+  async readProjectById(projectId: number, userId?: number): Promise<[OperationResult, ReadProjectDto?]> {
+    const project = await this.projectRepository.findOne(projectId, { relations: ['participants', 'tags'] });
+
+    const isNotFound = !project;
+    const isParticipating = project && project.participants.some(user => user.id === userId);
+    const isPrivate = project && project.privacy === Privacy.Private;
+    if (isNotFound || (isPrivate && !isParticipating)) {
+      return [OperationResult.NotFound, null];
+    }
+
+    const readProjectDto = new ReadProjectDto();
+    readProjectDto.name = project.name;
+    readProjectDto.description = project.description;
+    readProjectDto.privacy = project.privacy;
+    readProjectDto.tags = project.tags.map(tag => tag.name);
+    readProjectDto.createdDate = project.created_time.toJSON();
+
+    return [OperationResult.Success, readProjectDto];
   }
 
   async deleteProjectById(projectId: number, userId: number, permission: Permission): Promise<OperationResult> {
