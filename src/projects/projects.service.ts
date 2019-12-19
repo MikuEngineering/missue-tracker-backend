@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, Not } from 'typeorm';
 import { Project, Status, Privacy } from './projects.entity';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { ReadProjectDto } from './dto/read-project.dto';
+import { UpdateProjectDto } from './dto/update-project.dto';
 import { User, Permission } from '../users/users.entity';
 import { TagsService } from '../tags/tags.service';
 import { OperationResult } from '../common/types/operation-result.type';
@@ -59,6 +60,53 @@ export class ProjectsService {
     readProjectDto.createdDate = project.created_time.toJSON();
 
     return [OperationResult.Success, readProjectDto];
+  }
+
+  async updateProjectById(
+    updateProjectDto: UpdateProjectDto,
+    projectId: number,
+    userId: number,
+    permission: Permission
+  ): Promise<OperationResult>
+  {
+    const project = await this.projectRepository.findOne(projectId, { relations: ['owner', 'participants', 'tags'] });
+
+    // Check whether the project exists
+    if (!project) {
+      return OperationResult.NotFound;
+    }
+
+    // Check permissions
+    const isParticipating = project.participants.some(user => user.id === userId);
+    const isAdmin = permission === Permission.Admin;
+    if (!isParticipating && !isAdmin) {
+      return OperationResult.Forbidden;
+    }
+
+    // Check conflict
+    const count = await this.projectRepository.count({
+      where: {
+        id: Not(project.id),
+        name: updateProjectDto.name, 
+        owner: { id: project.owner.id },
+        status: Status.Normal
+      }
+    });
+    if (count > 0) {
+      return OperationResult.Conflict;
+    }
+
+    // Update the project
+    await this.projectRepository.update({ id: projectId }, {
+      name: updateProjectDto.name,
+      description: updateProjectDto.description,
+      privacy: updateProjectDto.privacy,
+    })
+
+    // Update the tags
+    await this.tagsService.updateTags(updateProjectDto.tags, projectId);
+
+    return OperationResult.Success;
   }
 
   async deleteProjectById(projectId: number, userId: number, permission: Permission): Promise<OperationResult> {
