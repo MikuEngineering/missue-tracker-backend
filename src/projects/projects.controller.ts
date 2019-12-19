@@ -1,7 +1,22 @@
-import { Controller, Body, Post, Delete, Request, Response, Param, UseGuards, HttpStatus, ForbiddenException, NotFoundException, Get } from '@nestjs/common';
+import {
+  Controller,
+  Body,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Request,
+  Response,
+  Param,
+  UseGuards,
+  HttpStatus,
+  ForbiddenException,
+  NotFoundException,
+  ConflictException
+} from '@nestjs/common';
 import { Request as ExpressRequest, Response as ExpressResponse } from 'express';
 import { CreateProjectDto } from './dto/create-project.dto';
-import { ReadProjectDto } from './dto/read-project.dto';
+import { UpdateProjectDto } from './dto/update-project.dto';
 import { ProjectsService } from './projects.service';
 import { User } from '../users/users.entity';
 import { AuthenticatedGuard } from '../common/guards/authenticated.guard';
@@ -45,6 +60,23 @@ export class ProjectsController {
     }
 
     return readProjectDto;
+  }
+
+  @UseGuards(AuthenticatedGuard)
+  @Put(':id')
+  async updateProjectById(
+    @Param('id', IdValidationPipe) projectId: number,
+    @Body(ValidationPipe) updateProjectDto: UpdateProjectDto,
+    @Request() request: ExpressRequest,
+  ) {
+    const { id: userId, permission } = request.user as SessionUser;
+    const result = await this.projectsService.updateProjectById(updateProjectDto, projectId, userId, permission);
+
+    switch (result) {
+      case OperationResult.NotFound: throw new NotFoundException();
+      case OperationResult.Forbidden: throw new ForbiddenException();
+      case OperationResult.Conflict: throw new ConflictException();
+    }
   }
 
   @UseGuards(AuthenticatedGuard)

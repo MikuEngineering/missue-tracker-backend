@@ -22,4 +22,9 @@ export class TagsService {
 
     return this.tagRepository.save(newTags);
   }
+
+  async updateTags(newTagNames: string[], projectId: number) {
+    await this.tagRepository.delete({ project: { id: projectId } });
+    await this.createMany(newTagNames, projectId);
+  }
 }
