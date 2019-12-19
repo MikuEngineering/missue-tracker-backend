@@ -1,6 +1,7 @@
-import { Controller, Body, Post, Delete, Request, Response, Param, UseGuards, HttpStatus, ForbiddenException, NotFoundException } from '@nestjs/common';
-import { Request as ExpressRequest, Response as ExpressResponse, response } from 'express';
+import { Controller, Body, Post, Delete, Request, Response, Param, UseGuards, HttpStatus, ForbiddenException, NotFoundException, Get } from '@nestjs/common';
+import { Request as ExpressRequest, Response as ExpressResponse } from 'express';
 import { CreateProjectDto } from './dto/create-project.dto';
+import { ReadProjectDto } from './dto/read-project.dto';
 import { ProjectsService } from './projects.service';
 import { User } from '../users/users.entity';
 import { AuthenticatedGuard } from '../common/guards/authenticated.guard';
@@ -27,6 +28,23 @@ export class ProjectsController {
       return;
     }
     response.status(HttpStatus.CONFLICT).send();
+  }
+
+  @Get(':id')
+  async readProjectById(
+    @Param('id', IdValidationPipe) projectId: number,
+    @Request() request: ExpressRequest
+  ) {
+    const user: SessionUser = request.user as SessionUser;
+    const userId: number | undefined = user && user.id;
+
+    const [result, readProjectDto] = await this.projectsService.readProjectById(projectId, userId);
+
+    if (result === OperationResult.NotFound) {
+      throw new NotFoundException();
+    }
+
+    return readProjectDto;
   }
 
   @UseGuards(AuthenticatedGuard)
