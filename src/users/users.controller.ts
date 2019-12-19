@@ -45,7 +45,7 @@ export class UsersController {
   }
 
   @Post()
-  async register(@Body() registerUserDto: RegisterUserDto, @Response() response: ExpressResponse) {
+  async register(@Body(ValidationPipe) registerUserDto: RegisterUserDto, @Response() response: ExpressResponse) {
     const result = await this.usersService.register(registerUserDto);
     if (result) {
       response.status(HttpStatus.CREATED).send();
