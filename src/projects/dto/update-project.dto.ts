@@ -1,4 +1,4 @@
-import { IsNotEmpty, MaxLength, Matches, IsEnum, ArrayUnique } from 'class-validator';
+import { IsNotEmpty, MaxLength, Matches, IsEnum, IsString, ArrayUnique } from 'class-validator';
 import { Privacy } from '../projects.entity';
 
 export class UpdateProjectDto {
@@ -25,6 +25,10 @@ export class UpdateProjectDto {
 
   @IsNotEmpty({
     message: 'The length of each tag must be greater than 0.',
+    each: true,
+  })
+  @IsString({
+    message: 'Every tag should be a string.',
     each: true,
   })
   @ArrayUnique({
