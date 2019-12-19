@@ -29,7 +29,8 @@ export class ProjectsService {
       owner: { id: user.id },
       name: createProjectDto.name,
       description: createProjectDto.description,
-      privacy: createProjectDto.privacy
+      privacy: createProjectDto.privacy,
+      participants: [{ id: user.id }]
     });
 
     newProject = await this.projectRepository.save(newProject);
