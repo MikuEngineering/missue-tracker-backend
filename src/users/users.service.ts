@@ -46,6 +46,7 @@ export class UsersService {
     await this.userRepository.update({ id: userId }, {
       nickname: updateProfileDto.nickname,
       autobiography: updateProfileDto.autobiography,
+      email: updateProfileDto.email
     });
 
     return true;

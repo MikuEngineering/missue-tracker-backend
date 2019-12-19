@@ -2,7 +2,7 @@ import {
   Controller,
   Get,
   Post,
-  Patch,
+  Put,
   Delete,
   Body,
   Param,
@@ -55,7 +55,7 @@ export class UsersController {
   }
 
   @UseGuards(AuthenticatedGuard)
-  @Patch(':id')
+  @Put(':id')
   async updateProfile(
     @Body(ValidationPipe) updateProfileDto: UpdateProfileDto,
     @Param('id', IdValidationPipe) userId: number,
