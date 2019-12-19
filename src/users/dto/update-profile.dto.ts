@@ -1,4 +1,4 @@
-import { MaxLength, IsString } from 'class-validator';
+import { MaxLength, IsString, IsEmail } from 'class-validator';
 
 export class UpdateProfileDto {
   @IsString({
@@ -16,4 +16,9 @@ export class UpdateProfileDto {
     message: 'The length of autobiography must be less than or equal to 250.'
   })
   readonly autobiography: string;
+
+  @IsEmail({}, {
+    message: 'The format of your email address is invalid.'
+  })
+  readonly email: string;
 }
