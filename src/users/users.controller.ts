@@ -25,6 +25,7 @@ import { AdminGuard } from '../common/guards/admin.guard';
 import { ValidationPipe } from '../common/pipes/validation.pipe'
 import { IdValidationPipe } from '../common/pipes/id-validation.pipe';
 import { SessionUser } from '../common/types/session-user.type';
+import { OperationResult } from '../common/types/operation-result.type';
 
 @Controller('users')
 export class UsersController {
@@ -107,5 +108,16 @@ export class UsersController {
     }
 
     response.status(HttpStatus.NO_CONTENT).send();
+  }
+
+  @Get(':id/projects')
+  async readAllProjects(@Param('id', IdValidationPipe) userId: number) {
+    const [result, projectIds] = await this.usersService.readAllProjectIdsById(userId);
+
+    if (result === OperationResult.NotFound) {
+      throw new NotFoundException();
+    }
+
+    return { projects: projectIds };
   }
 }

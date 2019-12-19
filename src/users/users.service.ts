@@ -4,6 +4,7 @@ import { User, Status } from './users.entity';
 import { Repository } from 'typeorm';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import { OperationResult } from '../common/types/operation-result.type';
 
 @Injectable()
 export class UsersService {
@@ -68,6 +69,20 @@ export class UsersService {
 
     await this.userRepository.update({ id: userId }, { status: Status.Normal });
     return true;
+  }
+
+  async readAllProjectIdsById(userId: number): Promise<[OperationResult, number[]]> {
+    const user = await this.userRepository.findOne({ id: userId }, {
+      relations: ['participatingProjects']
+    });
+
+    if (!user) {
+      return [OperationResult.NotFound, null];
+    }
+
+    const projectIds = user.participatingProjects.map(project => project.id);
+
+    return [OperationResult.Success, projectIds];
   }
 
   private async checkUserExistenceById(userId: number): Promise<boolean> {
