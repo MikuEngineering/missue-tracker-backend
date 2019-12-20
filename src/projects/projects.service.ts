@@ -10,6 +10,7 @@ import { TagsService } from '../tags/tags.service';
 import { OperationResult } from '../common/types/operation-result.type';
 import { Resource } from '../common/types/resource.type';
 
+type Ownership = { ownerId: number };
 @Injectable()
 export class ProjectsService {
   constructor(
@@ -163,16 +164,23 @@ export class ProjectsService {
     return OperationResult.Success;
   }
 
-  async transferProject(
+  /**
+   * Check the ownership of a project.
+   * @param projectId The project's id.
+   * @param ownerId The owner's id which will be checked.
+   * @param isAdmin Is the user an admin.
+   * @return If the project doesn't exist, return undefined.
+   * If the project exists return the ownership object.
+   */
+  private async executeProjectOwnershipQuery(
     projectId: number,
-    targetUserId: number,
     ownerId: number,
-    permission: number
-  ): Promise<[OperationResult, Resource?]>
+    isAdmin: boolean
+  ): Promise<Ownership | undefined>
   {
     // Join project, owner, and participants and
     // search for the project by its id.
-    let query = this.projectRepository
+    const query = this.projectRepository
       .createQueryBuilder('project')
       .leftJoinAndSelect('project.owner', 'owner')
       .leftJoinAndSelect('project.participants', 'participant')
@@ -181,7 +189,6 @@ export class ProjectsService {
     // If the user is not an admin, add conditions to the query.
     // These condtitions are used to check whether the user is
     // the owner or an participant of this project.
-    const isAdmin = permission === Permission.Admin;
     if (!isAdmin) {
       query.andWhere(new Brackets((qb) => {
         qb.where('owner.id = :ownerId', { ownerId })
@@ -193,7 +200,19 @@ export class ProjectsService {
     query.select('owner.id', 'ownerId');
 
     // Execute this query.
-    const project: { ownerId: number } = await query.getRawOne();
+    return query.getRawOne();
+  }
+
+  async transferProject(
+    projectId: number,
+    targetUserId: number,
+    ownerId: number,
+    permission: number
+  ): Promise<[OperationResult, Resource?]>
+  {
+    const isAdmin = permission === Permission.Admin;
+    const project: Ownership =
+      await this.executeProjectOwnershipQuery(projectId, ownerId, isAdmin);
 
     // The project does not exist.
     if (!project) {
