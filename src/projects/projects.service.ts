@@ -1,20 +1,30 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Not } from 'typeorm';
+import { Repository, Not, Brackets } from 'typeorm';
 import { Project, Status, Privacy } from './projects.entity';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { ReadProjectDto } from './dto/read-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
-import { User, Permission } from '../users/users.entity';
+import { User, Permission, Status as UserStatue } from '../users/users.entity';
 import { TagsService } from '../tags/tags.service';
 import { OperationResult } from '../common/types/operation-result.type';
+import { Resource } from '../common/types/resource.type';
+import { UsersService } from '../users/users.service';
+
+const REASON_USER_NOT_OWNER = 'You do not own this project so you cannot transfer this project.';
+const REASON_TARGET_USER_BANNED = 'Cannot transfer this project to the target user who is banned.';
+const REASON_TARGET_USER_NOT_PARTICIPANT = 'The target user is not a participant of this project.';
+const REASON_TARGET_USER_HAS_PROJECT_SAME_NAME = 'The target user has a project whose name is the same as this project.'
+
+type Ownership = { name: string, ownerId: number };
 
 @Injectable()
 export class ProjectsService {
   constructor(
     @InjectRepository(Project)
     private readonly projectRepository: Repository<Project>,
-    private readonly tagsService: TagsService
+    private readonly tagsService: TagsService,
+    private readonly userService: UsersService,
   ) {}
 
   async create(createProjectDto: CreateProjectDto, user: User): Promise<boolean> {
@@ -160,6 +170,111 @@ export class ProjectsService {
     await this.tagsService.updateTags(updateProjectDto.tags, projectId);
 
     return OperationResult.Success;
+  }
+
+  /**
+   * Check the ownership of a project.
+   * @param projectId The project's id.
+   * @param ownerId The owner's id which will be checked.
+   * @param isAdmin Is the user an admin.
+   * @return If the project doesn't exist, return undefined.
+   * If the project exists return the ownership object.
+   */
+  private async executeProjectOwnershipQuery(
+    projectId: number,
+    ownerId: number,
+    isAdmin: boolean
+  ): Promise<Ownership | undefined>
+  {
+    // Join project, owner, and participants and
+    // search for the project by its id.
+    const query = this.projectRepository
+      .createQueryBuilder('project')
+      .leftJoinAndSelect('project.owner', 'owner')
+      .leftJoinAndSelect('project.participants', 'participant')
+      .where('project.id = :projectId', { projectId });
+
+    // If the user is not an admin, add conditions to the query.
+    // These condtitions are used to check whether the user is
+    // the owner or an participant of this project.
+    if (!isAdmin) {
+      query.andWhere(new Brackets((qb) => {
+        qb.where('owner.id = :ownerId', { ownerId })
+          .orWhere('participant.id = :participantId', { participantId: ownerId })
+      }));
+    }
+
+    // Finally, get the owner's id and the project's name.
+    query.select('owner.id', 'ownerId')
+      .addSelect('project.name', 'name');
+
+    // Execute this query.
+    return query.getRawOne();
+  }
+
+  async transferProject(
+    projectId: number,
+    targetUserId: number,
+    ownerId: number,
+    permission: number
+  ): Promise<[OperationResult, Resource, string?]>
+  {
+    const isAdmin = permission === Permission.Admin;
+    const project: Ownership =
+      await this.executeProjectOwnershipQuery(projectId, ownerId, isAdmin);
+
+    // The project does not exist.
+    if (!project) {
+      return [OperationResult.NotFound, Resource.Project];
+    }
+
+    // The user is not the project owner nor an admin.
+    const isOwner = project.ownerId === ownerId;
+    if (!isOwner && !isAdmin) {
+      return [OperationResult.Forbidden, Resource.User, REASON_USER_NOT_OWNER];
+    }
+
+    // Get the target user.
+    const targetUser = await this.userService.findOne(targetUserId);
+    if (!targetUser) {
+      return [OperationResult.NotFound, Resource.User];
+    }
+
+    // Cannot transfer the project to the target user who is banned.
+    if (targetUser.status === UserStatue.Banned) {
+      return [OperationResult.Forbidden, Resource.User, REASON_TARGET_USER_BANNED];
+    }
+
+    // Search for the target user in the project.
+    let count = await this.projectRepository
+      .createQueryBuilder('project')
+      .leftJoinAndSelect('project.participants', 'participant')
+      .where('project.id = :projectId', { projectId })
+      .andWhere('participant.id = :userId', { userId: targetUserId })
+      .getCount();
+
+    // Cannot transfer the project to the target user who is not a member in this project.
+    if (count < 1) {
+      return [OperationResult.Forbidden, Resource.User, REASON_TARGET_USER_NOT_PARTICIPANT];
+    }
+
+    // Check whether the target user has a project whose name is the same as this project's.
+    count = await this.projectRepository
+      .createQueryBuilder('project')
+      .leftJoinAndSelect('project.owner', 'owner')
+      .where('project.name = :name', { name: project.name })
+      .andWhere('owner.id = :userId', { userId: targetUserId })
+      .getCount();
+
+    // Cannot transfer the project to the target user who has a project whose name is the same as this project's.
+    if (count > 0) {
+      return [OperationResult.Conflict, Resource.User];
+    }
+
+    // Finnaly, transfer the project to the target users.
+    await this.projectRepository.update({ id: projectId }, { owner: { id: targetUserId } });
+
+    return [OperationResult.Success, Resource.Project];
   }
 
   async deleteProjectById(projectId: number, userId: number, permission: Permission): Promise<OperationResult> {

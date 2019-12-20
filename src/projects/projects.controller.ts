@@ -18,6 +18,7 @@ import {
 import { Request as ExpressRequest, Response as ExpressResponse } from 'express';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
+import { TransferProjectDto } from './dto/transfer-project.dto';
 import { ProjectsService } from './projects.service';
 import { User, Permission } from '../users/users.entity';
 import { AuthenticatedGuard } from '../common/guards/authenticated.guard';
@@ -26,6 +27,7 @@ import { IdValidationPipe } from '../common/pipes/id-validation.pipe';
 import { QueryStringPipe } from '../common/pipes/query-string.validation.pipe';
 import { SessionUser } from '../common/types/session-user.type';
 import { OperationResult } from '../common/types/operation-result.type';
+import { Resource } from '../common/types/resource.type';
 
 @Controller('projects')
 export class ProjectsController {
@@ -105,6 +107,48 @@ export class ProjectsController {
       case OperationResult.NotFound: throw new NotFoundException();
       case OperationResult.Forbidden: throw new ForbiddenException();
       case OperationResult.Conflict: throw new ConflictException();
+    }
+  }
+
+  @UseGuards(AuthenticatedGuard)
+  @Put(':id/owner')
+  async transferProject(
+    @Param('id', IdValidationPipe) projectId: number,
+    @Body(ValidationPipe) body: TransferProjectDto,
+    @Request() request: ExpressRequest,
+  ) {
+    const { id: ownerId, permission } = request.user as SessionUser;
+    const { id: targetUserId } = body;
+    const [result, resource, reason] = await this.projectsService.transferProject(
+      projectId,
+      targetUserId,
+      ownerId,
+      permission,
+    );
+
+    if (result === OperationResult.NotFound) {
+      if (resource === Resource.Project) {
+        throw new NotFoundException({
+          message: 'The project does not exist.'
+        });
+      }
+      else {
+        throw new NotFoundException({
+          message: 'The target user does not exist.'
+        });
+      }
+    }
+
+    if (result === OperationResult.Forbidden) {
+      throw new ForbiddenException({
+        message: reason
+      });
+    }
+
+    if (result === OperationResult.Conflict) {
+      throw new ConflictException({
+        message: "Cannot transfer the project to the target user who has a project whose name is the same as this project's."
+      });
     }
   }
 
