@@ -19,6 +19,7 @@ import { Request as ExpressRequest, Response as ExpressResponse } from 'express'
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { TransferProjectDto } from './dto/transfer-project.dto';
+import { PrivacyProjectDto } from './dto/privacy-project.dto';
 import { ProjectsService } from './projects.service';
 import { User, Permission } from '../users/users.entity';
 import { AuthenticatedGuard } from '../common/guards/authenticated.guard';
@@ -149,6 +150,28 @@ export class ProjectsController {
       throw new ConflictException({
         message: "Cannot transfer the project to the target user who has a project whose name is the same as this project's."
       });
+    }
+  }
+
+  @UseGuards(AuthenticatedGuard)
+  @Put(':id/privacy')
+  async changePrivacy(
+    @Param('id', IdValidationPipe) projectId: number,
+    @Body(ValidationPipe) privacyProjectDto: PrivacyProjectDto,
+    @Request() request: ExpressRequest,
+  ) {
+    const { id: userId, permission } = request.user as SessionUser;
+    const { privacy } = privacyProjectDto;
+    const result = await this.projectsService.changePrivacy(
+      projectId,
+      privacy,
+      userId,
+      permission,
+    );
+
+    switch (result) {
+      case OperationResult.NotFound: throw new NotFoundException();
+      case OperationResult.Forbidden: throw new ForbiddenException();
     }
   }
 

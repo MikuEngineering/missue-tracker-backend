@@ -277,6 +277,29 @@ export class ProjectsService {
     return [OperationResult.Success, Resource.Project];
   }
 
+  async changePrivacy(
+    projectId: number,
+    privacy: Privacy,
+    userId: number,
+    permission: number
+  ): Promise<OperationResult>
+  {
+    const project = await this.projectRepository.findOne(projectId, { relations: ['owner'] });
+    if (!project) {
+      return OperationResult.NotFound;
+    }
+
+    const isOwner = project.owner.id === userId;
+    const isAdmin = permission === Permission.Admin;
+    if (!isOwner && !isAdmin) {
+      return OperationResult.Forbidden;
+    }
+
+    await this.projectRepository.update({ id: projectId }, { privacy });
+
+    return OperationResult.Success;
+  }
+
   async deleteProjectById(projectId: number, userId: number, permission: Permission): Promise<OperationResult> {
     const project = await this.projectRepository.findOne(projectId, { select: ['id', 'owner'], relations: ['owner'] });
 
