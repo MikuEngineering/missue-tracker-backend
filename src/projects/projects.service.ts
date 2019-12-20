@@ -231,18 +231,18 @@ export class ProjectsService {
     // The user is not the project owner nor an admin.
     const isOwner = project.ownerId === ownerId;
     if (!isOwner && !isAdmin) {
-      return [OperationResult.Forbidden, Resource.User, REASON_USER_NOT_OWNER]; // OK
+      return [OperationResult.Forbidden, Resource.User, REASON_USER_NOT_OWNER];
     }
 
     // Get the target user.
     const targetUser = await this.userService.findOne(targetUserId);
     if (!targetUser) {
-      return [OperationResult.NotFound, Resource.User]; // OK
+      return [OperationResult.NotFound, Resource.User];
     }
 
     // Cannot transfer the project to the target user who is banned.
     if (targetUser.status === UserStatue.Banned) {
-      return [OperationResult.Forbidden, Resource.User, REASON_TARGET_USER_BANNED]; // OK
+      return [OperationResult.Forbidden, Resource.User, REASON_TARGET_USER_BANNED];
     }
 
     // Search for the target user in the project.
@@ -255,7 +255,7 @@ export class ProjectsService {
 
     // Cannot transfer the project to the target user who is not a member in this project.
     if (count < 1) {
-      return [OperationResult.Forbidden, Resource.User, REASON_TARGET_USER_NOT_PARTICIPANT]; // OK
+      return [OperationResult.Forbidden, Resource.User, REASON_TARGET_USER_NOT_PARTICIPANT];
     }
 
     // Check whether the target user has a project whose name is the same as this project's.
@@ -270,6 +270,9 @@ export class ProjectsService {
     if (count > 0) {
       return [OperationResult.Conflict, Resource.User];
     }
+
+    // Finnaly, transfer the project to the target users.
+    await this.projectRepository.update({ id: projectId }, { owner: { id: targetUserId } });
 
     return [OperationResult.Success, Resource.Project];
   }
