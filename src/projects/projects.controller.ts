@@ -113,8 +113,19 @@ export class ProjectsController {
   @Put(':id/owner')
   async transferProject(
     @Param('id', IdValidationPipe) projectId: number,
-    @Body(ValidationPipe) body: TransferProjectDto
+    @Body(ValidationPipe) body: TransferProjectDto,
+    @Request() request: ExpressRequest,
   ) {
+    const { id: ownerId, permission } = request.user as SessionUser;
+    const { id: targetUserId } = body;
+    const result = await this.projectsService.transferProject(
+      projectId,
+      targetUserId,
+      ownerId,
+      permission,
+    );
+
+    console.log(result);
   }
 
   @UseGuards(AuthenticatedGuard)

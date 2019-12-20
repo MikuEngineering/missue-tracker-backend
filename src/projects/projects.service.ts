@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Not } from 'typeorm';
+import { Repository, Not, Brackets } from 'typeorm';
 import { Project, Status, Privacy } from './projects.entity';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { ReadProjectDto } from './dto/read-project.dto';
@@ -8,6 +8,7 @@ import { UpdateProjectDto } from './dto/update-project.dto';
 import { User, Permission } from '../users/users.entity';
 import { TagsService } from '../tags/tags.service';
 import { OperationResult } from '../common/types/operation-result.type';
+import { Resource } from '../common/types/resource.type';
 
 @Injectable()
 export class ProjectsService {
@@ -160,6 +161,52 @@ export class ProjectsService {
     await this.tagsService.updateTags(updateProjectDto.tags, projectId);
 
     return OperationResult.Success;
+  }
+
+  async transferProject(
+    projectId: number,
+    targetUserId: number,
+    ownerId: number,
+    permission: number
+  ): Promise<[OperationResult, Resource?]>
+  {
+    // Join project, owner, and participants and
+    // search for the project by its id.
+    let query = this.projectRepository
+      .createQueryBuilder('project')
+      .leftJoinAndSelect('project.owner', 'owner')
+      .leftJoinAndSelect('project.participants', 'participant')
+      .where('project.id = :projectId', { projectId });
+
+    // If the user is not an admin, add conditions to the query.
+    // These condtitions are used to check whether the user is
+    // the owner or an participant of this project.
+    const isAdmin = permission === Permission.Admin;
+    if (!isAdmin) {
+      query.andWhere(new Brackets((qb) => {
+        qb.where('owner.id = :ownerId', { ownerId })
+          .orWhere('participant.id = :participantId', { participantId: ownerId })
+      }));
+    }
+
+    // Finally, get the owner's id.
+    query.select('owner.id', 'ownerId');
+
+    // Execute this query.
+    const project: { ownerId: number } = await query.getRawOne();
+
+    // The project does not exist.
+    if (!project) {
+      return [OperationResult.NotFound, Resource.Project];
+    }
+
+    // The user is not the project owner nor an admin.
+    const isOwner = project.ownerId === ownerId;
+    if (!isOwner && !isAdmin) {
+      return [OperationResult.Forbidden, Resource.User];
+    }
+
+    return [OperationResult.Success, Resource.Project];
   }
 
   async deleteProjectById(projectId: number, userId: number, permission: Permission): Promise<OperationResult> {
