@@ -8,6 +8,7 @@ import {
   Request,
   Response,
   Param,
+  Query,
   UseGuards,
   HttpStatus,
   ForbiddenException,
@@ -22,6 +23,7 @@ import { User, Permission } from '../users/users.entity';
 import { AuthenticatedGuard } from '../common/guards/authenticated.guard';
 import { ValidationPipe } from '../common/pipes/validation.pipe';
 import { IdValidationPipe } from '../common/pipes/id-validation.pipe';
+import { QueryStringPipe } from '../common/pipes/query-string.validation.pipe';
 import { SessionUser } from '../common/types/session-user.type';
 import { OperationResult } from '../common/types/operation-result.type';
 
@@ -43,6 +45,31 @@ export class ProjectsController {
       return;
     }
     response.status(HttpStatus.CONFLICT).send();
+  }
+
+  @Get()
+  async readProjectIdByQueries(
+    @QueryStringPipe('owner_username') ownerUsername: string,
+    @QueryStringPipe('project_name') projectName: string,
+    @Request() request: ExpressRequest,
+  ) {
+    const user = request.user as SessionUser;
+    const userId = user && user.id;
+    const permission = user && user.permission;
+
+    const [result, projectId] =
+      await this.projectsService.readProjectByOwnerUsernameAndProjectName(
+        ownerUsername,
+        projectName,
+        userId,
+        permission,
+      );
+
+    if (result === OperationResult.NotFound) {
+      throw new NotFoundException();
+    }
+
+    return projectId;
   }
 
   @Get(':id')
