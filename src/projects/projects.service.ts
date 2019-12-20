@@ -85,13 +85,23 @@ export class ProjectsService {
     return [OperationResult.Success, project.id];
   }
 
-  async readProjectById(projectId: number, userId?: number): Promise<[OperationResult, ReadProjectDto?]> {
+  async readProjectById(
+    projectId: number,
+    userId: number | undefined,
+    permission: Permission | undefined
+  ): Promise<[OperationResult, ReadProjectDto?]>
+  {
     const project = await this.projectRepository.findOne(projectId, { relations: ['participants', 'tags'] });
 
     const isNotFound = !project;
+    if (isNotFound) {
+      return [OperationResult.NotFound, null];
+    }
+
+    const isAdmin = permission === Permission.Admin;
     const isParticipating = project && project.participants.some(user => user.id === userId);
     const isPrivate = project && project.privacy === Privacy.Private;
-    if (isNotFound || (isPrivate && !isParticipating)) {
+    if (!isAdmin && isPrivate && !isParticipating) {
       return [OperationResult.NotFound, null];
     }
 
