@@ -124,8 +124,6 @@ export class ProjectsController {
       ownerId,
       permission,
     );
-
-    console.log(result);
   }
 
   @UseGuards(AuthenticatedGuard)
