@@ -42,6 +42,22 @@ export class ProjectsService {
     return true;
   }
 
+  async readProjectByOwnerUsernameAndProjectName(ownerUsername: string, projectName: string): Promise<[OperationResult, number?]> {
+    const project = await this.projectRepository
+      .createQueryBuilder('project')
+      .leftJoinAndSelect('project.owner', 'owner')
+      .where('project.name = :projectName', { projectName })
+      .andWhere('owner.username = :username', { username: ownerUsername })
+      .select('project.id')
+      .getOne();
+
+    if (!project) {
+      return [OperationResult.NotFound, null];
+    }
+
+    return [OperationResult.Success, project.id];
+  }
+
   async readProjectById(projectId: number, userId?: number): Promise<[OperationResult, ReadProjectDto?]> {
     const project = await this.projectRepository.findOne(projectId, { relations: ['participants', 'tags'] });
 
