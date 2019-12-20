@@ -27,6 +27,7 @@ import { IdValidationPipe } from '../common/pipes/id-validation.pipe';
 import { QueryStringPipe } from '../common/pipes/query-string.validation.pipe';
 import { SessionUser } from '../common/types/session-user.type';
 import { OperationResult } from '../common/types/operation-result.type';
+import { Resource } from '../common/types/resource.type';
 
 @Controller('projects')
 export class ProjectsController {
@@ -118,12 +119,37 @@ export class ProjectsController {
   ) {
     const { id: ownerId, permission } = request.user as SessionUser;
     const { id: targetUserId } = body;
-    const result = await this.projectsService.transferProject(
+    const [result, resource, reason] = await this.projectsService.transferProject(
       projectId,
       targetUserId,
       ownerId,
       permission,
     );
+
+    if (result === OperationResult.NotFound) {
+      if (resource === Resource.Project) {
+        throw new NotFoundException({
+          message: 'The project does not exist.'
+        });
+      }
+      else {
+        throw new NotFoundException({
+          message: 'The target user does not exist.'
+        });
+      }
+    }
+
+    if (result === OperationResult.Forbidden) {
+      throw new ForbiddenException({
+        message: reason
+      });
+    }
+
+    if (result === OperationResult.Conflict) {
+      throw new ConflictException({
+        message: "Cannot transfer the project to the target user who has a project whose name is the same as this project's."
+      });
+    }
   }
 
   @UseGuards(AuthenticatedGuard)
