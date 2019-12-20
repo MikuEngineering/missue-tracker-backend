@@ -42,19 +42,46 @@ export class ProjectsService {
     return true;
   }
 
-  async readProjectByOwnerUsernameAndProjectName(ownerUsername: string, projectName: string): Promise<[OperationResult, number?]> {
+  async readProjectByOwnerUsernameAndProjectName(
+    ownerUsername: string,
+    projectName: string,
+    userId: number,
+    permission: Permission,
+  ): Promise<[OperationResult, number?]>
+  {
     const project = await this.projectRepository
       .createQueryBuilder('project')
       .leftJoinAndSelect('project.owner', 'owner')
       .where('project.name = :projectName', { projectName })
       .andWhere('owner.username = :username', { username: ownerUsername })
-      .select('project.id')
+      .select(['project.id', 'project.privacy'])
       .getOne();
 
+    // The project does not exist.
     if (!project) {
       return [OperationResult.NotFound, null];
     }
 
+    // Return its id if it is a public project or the user is an admin.
+    const isPublic = project.privacy === Privacy.Public;
+    const isAdmin = permission === Permission.Admin;
+    if (isPublic || isAdmin) {
+      return [OperationResult.Success, project.id];
+    }
+
+    // Now the user is not an admin.
+    // So check whether the user is a participant of the project.
+    // If true, return the project's id, otherwise return NotFound.
+    const count = await this.projectRepository
+      .createQueryBuilder('project')
+      .leftJoinAndSelect('project.participants', 'participant')
+      .where('project.id = :projectId', { projectId: project.id })
+      .andWhere('participant.id = :userId', { userId })
+      .getCount();
+
+    if (count < 1) {
+      return [OperationResult.NotFound, null];
+    }
     return [OperationResult.Success, project.id];
   }
 

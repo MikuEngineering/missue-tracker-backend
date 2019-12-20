@@ -51,9 +51,19 @@ export class ProjectsController {
   async readProjectIdByQueries(
     @QueryStringPipe('owner_username') ownerUsername: string,
     @QueryStringPipe('project_name') projectName: string,
+    @Request() request: ExpressRequest,
   ) {
+    const user = request.user as SessionUser;
+    const userId = user && user.id;
+    const permission = user && user.permission;
+
     const [result, projectId] =
-      await this.projectsService.readProjectByOwnerUsernameAndProjectName(ownerUsername, projectName);
+      await this.projectsService.readProjectByOwnerUsernameAndProjectName(
+        ownerUsername,
+        projectName,
+        userId,
+        permission,
+      );
 
     if (result === OperationResult.NotFound) {
       throw new NotFoundException();
