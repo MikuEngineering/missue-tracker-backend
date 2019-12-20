@@ -1,20 +1,20 @@
-import { IsNotEmpty, Matches, MaxLength, IsEnum } from 'class-validator';
+import { IsNotEmpty, Matches, MaxLength, IsEnum, IsString, ArrayUnique } from 'class-validator';
 import { Privacy } from '../projects.entity';
 
 export class CreateProjectDto {
   @IsNotEmpty({
-    message: 'Name must not be empty.'
+    message: 'Name is required.'
   })
   @MaxLength(180, {
     message: 'The length of name must be less than or equal to 180.'
   })
-  @Matches(/^[\w\-]{1,180}$/, {
+  @Matches(/^[\w\-]+$/, {
     message: 'Every letter in name must be English letters, numbers, underlines, or dashes.'
   })
   readonly name: string;
 
   @IsNotEmpty({
-    message: 'Description must not be empty.'
+    message: 'Description is required.'
   })
   readonly description: string;
 
@@ -26,6 +26,13 @@ export class CreateProjectDto {
   @IsNotEmpty({
     each: true,
     message: 'Each value in tags must not be empty.'
+  })
+  @IsString({
+    message: 'Every tag should be a string.',
+    each: true,
+  })
+  @ArrayUnique({
+    message: 'Every tag name should be unique.'
   })
   readonly tags: string[];
 }
