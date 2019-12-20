@@ -18,7 +18,7 @@ import { Request as ExpressRequest, Response as ExpressResponse } from 'express'
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { ProjectsService } from './projects.service';
-import { User } from '../users/users.entity';
+import { User, Permission } from '../users/users.entity';
 import { AuthenticatedGuard } from '../common/guards/authenticated.guard';
 import { ValidationPipe } from '../common/pipes/validation.pipe';
 import { IdValidationPipe } from '../common/pipes/id-validation.pipe';
@@ -52,8 +52,10 @@ export class ProjectsController {
   ) {
     const user: SessionUser = request.user as SessionUser;
     const userId: number | undefined = user && user.id;
+    const permission: Permission | undefined = user && user.permission;
 
-    const [result, readProjectDto] = await this.projectsService.readProjectById(projectId, userId);
+    const [result, readProjectDto] =
+      await this.projectsService.readProjectById(projectId, userId, permission);
 
     if (result === OperationResult.NotFound) {
       throw new NotFoundException();
