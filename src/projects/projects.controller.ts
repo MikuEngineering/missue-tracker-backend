@@ -18,6 +18,7 @@ import {
 import { Request as ExpressRequest, Response as ExpressResponse } from 'express';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
+import { TransferProjectDto } from './dto/transfer-project.dto';
 import { ProjectsService } from './projects.service';
 import { User, Permission } from '../users/users.entity';
 import { AuthenticatedGuard } from '../common/guards/authenticated.guard';
@@ -106,6 +107,14 @@ export class ProjectsController {
       case OperationResult.Forbidden: throw new ForbiddenException();
       case OperationResult.Conflict: throw new ConflictException();
     }
+  }
+
+  @UseGuards(AuthenticatedGuard)
+  @Put(':id/owner')
+  async transferProject(
+    @Param('id', IdValidationPipe) projectId: number,
+    @Body(ValidationPipe) body: TransferProjectDto
+  ) {
   }
 
   @UseGuards(AuthenticatedGuard)
