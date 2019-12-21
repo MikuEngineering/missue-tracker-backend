@@ -16,5 +16,6 @@ import { LabelsModule } from '../labels/labels.module';
   ],
   controllers: [ProjectsController],
   providers: [ProjectsService],
+  exports: [ProjectsService],
 })
 export class ProjectsModule {}
