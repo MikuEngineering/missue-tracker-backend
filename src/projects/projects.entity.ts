@@ -1,6 +1,7 @@
 import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, OneToMany, ManyToMany } from 'typeorm';
 import { User } from '../users/users.entity';
 import { Tag } from '../tags/tags.entity';
+import { Label } from '../labels/labels.entity';
 
 export enum Privacy {
   Public = 0,
@@ -40,4 +41,7 @@ export class Project {
 
   @ManyToMany(_ => User, user => user.participatingProjects)
   participants: User[];
+
+  @OneToMany(_ => Label, label => label.project)
+  labels: Label[];
 }

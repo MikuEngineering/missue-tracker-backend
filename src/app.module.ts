@@ -3,11 +3,13 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './users/users.entity';
 import { Project } from './projects/projects.entity';
 import { Tag } from './tags/tags.entity';
+import { Label } from './labels/labels.entity';
 import { UsersModule } from './users/users.module';
 import { ProjectsModule } from './projects/projects.module';
 import { TagsModule } from './tags/tags.module';
 import { AuthModule } from './auth/auth.module';
 import { SessionModule } from './session/session.module';
+import { LabelsModule } from './labels/labels.module';
 
 const {
   DB_HOST,
@@ -25,7 +27,7 @@ const {
       username: DB_USERNAME,
       password: DB_PASSWORD,
       database: DB_DATABASE,
-      entities: [User, Project, Tag],
+      entities: [User, Project, Tag, Label],
       synchronize: true,
     }),
     UsersModule,
@@ -33,6 +35,7 @@ const {
     TagsModule,
     AuthModule,
     SessionModule,
+    LabelsModule,
   ],
 })
 export class AppModule {}
