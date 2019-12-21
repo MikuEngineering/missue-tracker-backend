@@ -5,8 +5,8 @@ export class CreateProjectDto {
   @IsNotEmpty({
     message: 'Name is required.'
   })
-  @MaxLength(180, {
-    message: 'The length of name must be less than or equal to 180.'
+  @MaxLength(45, {
+    message: 'The length of name must be less than or equal to 45.'
   })
   @Matches(/^[\w\-]+$/, {
     message: 'Every letter in name must be English letters, numbers, underlines, or dashes.'
