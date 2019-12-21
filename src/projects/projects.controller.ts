@@ -7,8 +7,8 @@ import {
   Delete,
   Request,
   Response,
+  HttpCode,
   Param,
-  Query,
   UseGuards,
   HttpStatus,
   ForbiddenException,
@@ -245,6 +245,50 @@ export class ProjectsController {
       throw new ConflictException({
         message: 'The target user has already been in this project.'
       });
+    }
+  }
+
+  @UseGuards(AuthenticatedGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Delete(':id/members')
+  async removeUserFromProject(
+    @Param('id', IdValidationPipe) projectId: number,
+    @Body(ValidationPipe) memberIdDto: MemberIdDto,
+    @Request() request: ExpressRequest,
+  ) {
+    const { id: userId, permission } = request.user as SessionUser;
+    const { id: memberId } = memberIdDto;
+    const [result, resource] = await this.projectsService.removeUserFromProject(
+      projectId,
+      memberId,
+      userId,
+      permission,
+    );
+
+    if (result === OperationResult.NotFound) {
+      if (resource === Resource.Project) {
+        throw new NotFoundException({
+          message: 'The project does not exist.',
+        });
+      }
+      else {
+        throw new NotFoundException({
+          message: 'The target member is not in this project.',
+        });
+      }
+    }
+
+    if (result === OperationResult.Forbidden) {
+      if (resource === Resource.Project) {
+        throw new ForbiddenException({
+          message: 'Cannot remove the member since you are not the owner of this project.',
+        });
+      }
+      else {
+        throw new ForbiddenException({
+          message: 'Cannot remove the owner of this project.',
+        });
+      }
     }
   }
 

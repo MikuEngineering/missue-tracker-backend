@@ -369,6 +369,45 @@ export class ProjectsService {
     return [OperationResult.Success, null];
   }
 
+  async removeUserFromProject(
+    projectId: number,
+    memberId: number,
+    userId: number,
+    permission: Permission,
+  ): Promise<[OperationResult, Resource]>
+  {
+    const project = await this.projectRepository.findOne(projectId, {
+      relations: ['participants', 'owner'],
+    });
+
+    if (!project) {
+      return [OperationResult.NotFound, Resource.Project];
+    }
+
+    const memberExistence = project.participants.some(user => user.id === memberId);
+    if (!memberExistence) {
+      return [OperationResult.NotFound, Resource.User];
+    }
+
+    const isOwner = project.owner.id === userId;
+    const isAdmin = permission === Permission.Admin;
+    if (!isOwner && !isAdmin) {
+      return [OperationResult.Forbidden, Resource.Project];
+    }
+
+    if (project.owner.id === memberId) {
+      return [OperationResult.Forbidden, Resource.User];
+    }
+
+    await this.projectRepository
+      .createQueryBuilder('project')
+      .relation('participants')
+      .of(projectId)
+      .remove(memberId);
+
+    return [OperationResult.Success, Resource.Project];
+  }
+
   async deleteProjectById(projectId: number, userId: number, permission: Permission): Promise<OperationResult> {
     const project = await this.projectRepository.findOne(projectId, { select: ['id', 'owner'], relations: ['owner'] });
 
