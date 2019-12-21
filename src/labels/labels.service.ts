@@ -15,6 +15,7 @@ export class LabelsService {
   async create(createLabelDto: CreateLabelDto) {
     const label = await this.labelRepository.findOne({
       name: createLabelDto.name,
+      project: { id: createLabelDto.projectId },
     });
 
     if (label) {
