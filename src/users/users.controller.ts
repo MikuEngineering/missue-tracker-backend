@@ -75,19 +75,15 @@ export class UsersController {
   }
 
   @Get(':id')
-  async getProfile(@Param('id', IdValidationPipe) id: number, @Response() response: ExpressResponse) {
-    const user = await this.usersService.findOne(id);
-    if (!user) {
-      response.status(HttpStatus.NOT_FOUND).send();
-      return;
+  async getProfile(@Param('id', IdValidationPipe) userId: number) {
+    const readProfileDto = await this.usersService.readProfileById(userId);
+    if (!readProfileDto) {
+      throw new NotFoundException({
+        message: 'The user does not exist.',
+      });
     }
-    response.status(HttpStatus.OK).send({
-      username: user.username,
-      nickname: user.nickname,
-      email: user.email,
-      autobiography: user.autobiography,
-      permission: user.permission,
-    });
+
+    return readProfileDto;
   }
 
   @UseGuards(AuthenticatedGuard, AdminGuard)

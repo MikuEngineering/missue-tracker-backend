@@ -4,6 +4,7 @@ import { User, Status } from './users.entity';
 import { Repository } from 'typeorm';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import { ReadProfileDto } from './dto/read-profile.dto';
 import { OperationResult } from '../common/types/operation-result.type';
 
 @Injectable()
@@ -37,6 +38,23 @@ export class UsersService {
 
   async findOne(id: number): Promise<User> {
     return this.userRepository.findOne({ id });
+  }
+
+  async readProfileById(userId: number): Promise<ReadProfileDto | null> {
+    const user = await this.findOne(userId);
+    if (!user) {
+      return null;
+    }
+
+    const readProfileDto: ReadProfileDto = new ReadProfileDto();
+    readProfileDto.username = user.username;
+    readProfileDto.nickname = user.nickname;
+    readProfileDto.email = user.email;
+    readProfileDto.autobiography = user.autobiography;
+    readProfileDto.permission = user.permission;
+    readProfileDto.status = user.status;
+
+    return readProfileDto;
   }
 
   async updateProfile(updateProfileDto: UpdateProfileDto, userId: number): Promise<boolean> {
