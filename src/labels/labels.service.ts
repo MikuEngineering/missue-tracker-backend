@@ -1,16 +1,18 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, Not } from 'typeorm';
 import { Label } from './labels.entity';
 import { CreateLabelDto } from './dto/create-label.dto';
 import { ReadLabelDto } from './dto/read-label.dto';
+import { UpdateLabelDto } from './dto/update-label.dto';
+import { Permission } from '../users/users.entity';
 import { OperationResult } from '../common/types/operation-result.type';
 
 @Injectable()
 export class LabelsService {
   constructor(
     @InjectRepository(Label)
-    private readonly labelRepository: Repository<Label>
+    private readonly labelRepository: Repository<Label>,
   ) {}
 
   async create(createLabelDto: CreateLabelDto) {
@@ -65,5 +67,48 @@ export class LabelsService {
       deprecated: label.deprecated,
     };
     return [OperationResult.Success, readLabelDto];
+  }
+
+  async updateOneById(
+    labelId: number,
+    updateLabelDto: UpdateLabelDto,
+    userId: number,
+    permission: Permission,
+  )
+  {
+    const label = await this.labelRepository
+      .createQueryBuilder('label')
+      .leftJoinAndSelect('label.project', 'project')
+      .leftJoinAndSelect('project.owner', 'owner')
+      .where('label.id = :labelId', { labelId })
+      .getOne();
+
+    if (!label) {
+      return OperationResult.NotFound;
+    }
+
+    const { project } = label;
+    const isOwner = project.owner.id === userId;
+    const isAdmin = permission === Permission.Admin;
+    if (!isOwner && !isAdmin) {
+      return OperationResult.Forbidden;
+    }
+
+    const count = await this.labelRepository.count({
+      where: {
+        id: Not(labelId),
+        name: updateLabelDto.name,
+        project
+      }
+    });
+    if (count > 0) {
+      return OperationResult.Conflict;
+    }
+
+    label.name = updateLabelDto.name;
+    label.description = updateLabelDto.description;
+    label.color = updateLabelDto.color;
+    await this.labelRepository.save(label);
+    return OperationResult.Success;
   }
 }

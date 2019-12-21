@@ -6,7 +6,9 @@ import {
   Body,
   Request,
   UseGuards,
-  NotFoundException
+  NotFoundException,
+  ForbiddenException,
+  ConflictException,
 } from '@nestjs/common';
 import { Request as ExpressRequest } from 'express';
 import { LabelsService } from './labels.service';
@@ -44,5 +46,27 @@ export class LabelsController {
     @Body(ValidationPipe) updateLabelDto: UpdateLabelDto,
     @Request() request: ExpressRequest,
   ) {
+    const { id: userId, permission } = request.user as SessionUser;
+    const result = await this.labelsService.updateOneById(
+      labelId,
+      updateLabelDto,
+      userId,
+      permission,
+    );
+
+    switch (result) {
+      case OperationResult.NotFound:
+        throw new NotFoundException({
+          message: 'The label does not exist',
+        });
+      case OperationResult.Forbidden:
+        throw new ForbiddenException({
+          message: 'Cannot update the label since you are not the owner of this project.',
+        });
+      case OperationResult.Conflict:
+        throw new ConflictException({
+          message: 'Cannot update the label since there is another label having the same name.',
+        });
+    }
   }
 }
