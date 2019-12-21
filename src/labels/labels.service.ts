@@ -111,4 +111,32 @@ export class LabelsService {
     await this.labelRepository.save(label);
     return OperationResult.Success;
   }
+
+  async removeOneById(
+    labelId: number,
+    userId: number,
+    permission: Permission,
+  ): Promise<OperationResult>
+  {
+    const label = await this.labelRepository
+      .createQueryBuilder('label')
+      .leftJoinAndSelect('label.project', 'project')
+      .leftJoinAndSelect('project.owner', 'owner')
+      .where('label.id = :labelId', { labelId })
+      .getOne();
+
+    if (!label) {
+      return OperationResult.NotFound;
+    }
+
+    const { project } = label;
+    const isOwner = project.owner.id === userId;
+    const isAdmin = permission === Permission.Admin;
+    if (!isOwner && !isAdmin) {
+      return OperationResult.Forbidden;
+    }
+
+    await this.labelRepository.remove(label);
+    return OperationResult.Success;
+  }
 }
