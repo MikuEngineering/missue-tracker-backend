@@ -21,6 +21,7 @@ import { UpdateProjectDto } from './dto/update-project.dto';
 import { TransferProjectDto } from './dto/transfer-project.dto';
 import { PrivacyProjectDto } from './dto/privacy-project.dto';
 import { MemberIdDto } from './dto/member-id.dto';
+import { CreateLabelDto } from './dto/labels/create-label.dto';
 import { ProjectsService } from './projects.service';
 import { User, Permission } from '../users/users.entity';
 import { AuthenticatedGuard } from '../common/guards/authenticated.guard';
@@ -311,5 +312,14 @@ export class ProjectsController {
     }
 
     response.status(HttpStatus.NO_CONTENT).send();
+  }
+
+  @UseGuards(AuthenticatedGuard)
+  @Post(':id/labels')
+  async addNewLabelToProject(
+    @Param('id', IdValidationPipe) projectId: number,
+    @Body(ValidationPipe) createLabelDto: CreateLabelDto,
+    @Request() request: ExpressRequest,
+  ) {
   }
 }
