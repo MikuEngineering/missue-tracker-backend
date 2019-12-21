@@ -6,13 +6,13 @@ export class Label {
   @PrimaryGeneratedColumn()
   id: number
 
-  @Column({ length: 50 })
+  @Column()
   name: string
 
-  @Column({ length: 250 })
+  @Column()
   description: string
 
-  @Column({ length: 6 })
+  @Column()
   color: string
 
   @Column({ default: false })
