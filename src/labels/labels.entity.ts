@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, Unique } from 'typeorm';
 import { Project } from '../projects/projects.entity';
 
 @Entity()
@@ -7,6 +7,7 @@ export class Label {
   id: number
 
   @Column({ length: 50 })
+  @Unique(['name', 'project'])
   name: string
 
   @Column({ length: 250 })
