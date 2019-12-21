@@ -176,6 +176,29 @@ export class ProjectsController {
     }
   }
 
+  @Get(':id/members')
+  async readMembersOfProject(
+    @Param('id', IdValidationPipe) projectId: number,
+    @Request() request: ExpressRequest,
+  ) {
+    const user: SessionUser | undefined = request.user as SessionUser;
+    const userId: number | undefined = user && user.id;
+    const permission: Permission | undefined = user && user.permission;
+    const [result, memberIds] = await this.projectsService.readMembersOfProject(
+      projectId,
+      userId,
+      permission,
+    );
+
+    if (result === OperationResult.NotFound) {
+      throw new NotFoundException({
+        message: 'The project does not exist',
+      });
+    }
+
+    return { members: memberIds };
+  }
+
   @UseGuards(AuthenticatedGuard)
   @Post(':id/members')
   async addUserToProject(
