@@ -300,6 +300,31 @@ export class ProjectsService {
     return OperationResult.Success;
   }
 
+  async readMembersOfProject(
+    projectId: number,
+    userId?: number,
+    permission?: Permission,
+  ): Promise<[OperationResult, number[]?]>
+  {
+    const project = await this.projectRepository.findOne(projectId, {
+      relations: ['participants']
+    });
+
+    if (!project) {
+      return [OperationResult.NotFound, null];
+    }
+
+    const isPrivate = project.privacy === Privacy.Private;
+    const isParticipant = userId && project.participants.some(user => user.id === userId);
+    const isAdmin = permission && permission === Permission.Admin;
+    if (isPrivate && !isParticipant && !isAdmin) {
+      return [OperationResult.NotFound, null];
+    }
+
+    const memberIds = project.participants.map(user => user.id);
+    return [OperationResult.Success, memberIds];
+  }
+
   async addUserToProject(
     projectId: number,
     memberId: number,
