@@ -11,7 +11,7 @@ export class AuthService {
   async validateUser(username: string, password: string): Promise<[LoginResult, ValidateUserDto | null]> {
     const user = await this.usersService.findOneByUsername(username);
 
-    if (user.status === Status.Banned) {
+    if (user && user.status === Status.Banned) {
       return [LoginResult.Forbidden, null];
     }
 
