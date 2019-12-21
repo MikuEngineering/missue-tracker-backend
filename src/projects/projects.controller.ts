@@ -321,5 +321,27 @@ export class ProjectsController {
     @Body(ValidationPipe) createLabelDto: CreateLabelDto,
     @Request() request: ExpressRequest,
   ) {
+    const { id: userId, permission } = request.user as SessionUser;
+    const result = await this.projectsService.addNewLabel(
+      projectId,
+      createLabelDto,
+      userId,
+      permission
+    );
+
+    switch (result) {
+      case OperationResult.NotFound:
+        throw new NotFoundException({
+          message: 'The project does not exist.',
+        });
+      case OperationResult.Forbidden:
+        throw new ForbiddenException({
+          message: 'Cannot add the new label since you are not the owner of this project.',
+        });
+      case OperationResult.Conflict:
+        throw new ConflictException({
+          message: 'Cannot add the new label since there is another label having the same name.'
+        });
+    }
   }
 }

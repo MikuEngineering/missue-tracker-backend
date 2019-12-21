@@ -2,14 +2,18 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Not, Brackets } from 'typeorm';
 import { Project, Status, Privacy } from './projects.entity';
+
 import { CreateProjectDto } from './dto/create-project.dto';
 import { ReadProjectDto } from './dto/read-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
+import { CreateLabelDto } from './dto/labels/create-label.dto';
+
+import { UsersService } from '../users/users.service';
 import { User, Permission, Status as UserStatue } from '../users/users.entity';
 import { TagsService } from '../tags/tags.service';
+import { LabelsService } from '../labels/labels.service';
 import { OperationResult } from '../common/types/operation-result.type';
 import { Resource } from '../common/types/resource.type';
-import { UsersService } from '../users/users.service';
 
 const REASON_USER_NOT_OWNER = 'You do not own this project so you cannot transfer this project.';
 const REASON_TARGET_USER_BANNED = 'Cannot transfer this project to the target user who is banned.';
@@ -25,6 +29,7 @@ export class ProjectsService {
     private readonly projectRepository: Repository<Project>,
     private readonly tagsService: TagsService,
     private readonly userService: UsersService,
+    private readonly labelsService: LabelsService,
   ) {}
 
   async create(createProjectDto: CreateProjectDto, user: User): Promise<boolean> {
@@ -421,5 +426,31 @@ export class ProjectsService {
 
     await this.projectRepository.update(projectId, { status: Status.Deleted });
     return OperationResult.Success;
+  }
+
+  async addNewLabel(
+    projectId: number,
+    createLabelDto: CreateLabelDto,
+    userId: number,
+    permission: Permission,
+  ): Promise<OperationResult>
+  {
+    const project = await this.projectRepository.findOne(projectId, { relations: ['owner'] });
+    if (!project) {
+      return OperationResult.NotFound;
+    }
+
+    const isOwner = project.owner.id === userId;
+    const isAdmin = permission === Permission.Admin;
+    if (!isOwner && !isAdmin) {
+      return OperationResult.Forbidden;
+    }
+
+    return this.labelsService.create({
+      name: createLabelDto.name,
+      description: createLabelDto.description,
+      color: createLabelDto.color,
+      projectId
+    });
   }
 }
