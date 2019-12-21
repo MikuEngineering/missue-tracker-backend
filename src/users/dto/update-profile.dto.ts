@@ -4,8 +4,8 @@ export class UpdateProfileDto {
   @IsString({
     message: 'The type of nickname must be string.'
   })
-  @MaxLength(180, {
-    message: 'The length of nickname must be less than or equal to 180.'
+  @MaxLength(30, {
+    message: 'The length of nickname must be less than or equal to 30.'
   })
   readonly nickname: string;
 
