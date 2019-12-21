@@ -300,6 +300,50 @@ export class ProjectsService {
     return OperationResult.Success;
   }
 
+  async addUserToProject(
+    projectId: number,
+    memberId: number,
+    userId: number,
+    permission: Permission
+  ): Promise<[OperationResult, Resource?]>
+  {
+    const project = await this.projectRepository.findOne(projectId, {
+      relations: ['participants', 'owner']
+    });
+
+    if (!project) {
+      return [OperationResult.NotFound, Resource.Project];
+    }
+
+    const targetUser = await this.userService.findOne(memberId);
+    if (!targetUser) {
+      return [OperationResult.NotFound, Resource.User];
+    }
+
+    if (targetUser.status === UserStatue.Banned) {
+      return [OperationResult.Forbidden, Resource.User];
+    }
+
+    const isOwner = userId === project.owner.id;
+    const isAdmin = permission === Permission.Admin;
+    if (!isOwner && !isAdmin) {
+      return [OperationResult.Forbidden, Resource.Project];
+    }
+
+    const isMember = project.participants.some(user => user.id === memberId);
+    if (isMember) {
+      return [OperationResult.Conflict, null];
+    }
+
+    await this.projectRepository
+      .createQueryBuilder('project')
+      .relation('participants')
+      .of(projectId)
+      .add(memberId);
+
+    return [OperationResult.Success, null];
+  }
+
   async deleteProjectById(projectId: number, userId: number, permission: Permission): Promise<OperationResult> {
     const project = await this.projectRepository.findOne(projectId, { select: ['id', 'owner'], relations: ['owner'] });
 

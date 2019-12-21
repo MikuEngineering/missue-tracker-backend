@@ -20,6 +20,7 @@ import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { TransferProjectDto } from './dto/transfer-project.dto';
 import { PrivacyProjectDto } from './dto/privacy-project.dto';
+import { MemberIdDto } from './dto/member-id.dto';
 import { ProjectsService } from './projects.service';
 import { User, Permission } from '../users/users.entity';
 import { AuthenticatedGuard } from '../common/guards/authenticated.guard';
@@ -172,6 +173,55 @@ export class ProjectsController {
     switch (result) {
       case OperationResult.NotFound: throw new NotFoundException();
       case OperationResult.Forbidden: throw new ForbiddenException();
+    }
+  }
+
+  @UseGuards(AuthenticatedGuard)
+  @Post(':id/members')
+  async addUserToProject(
+    @Param('id', IdValidationPipe) projectId: number,
+    @Body(ValidationPipe) memberIdDto: MemberIdDto,
+    @Request() request: ExpressRequest,
+  ) {
+    const { id: userId, permission } = request.user as SessionUser;
+    const { id: memberId } = memberIdDto;
+    const [result, resource] = await this.projectsService.addUserToProject(
+      projectId,
+      memberId,
+      userId,
+      permission,
+    );
+
+    if (result === OperationResult.NotFound) {
+      if (resource === Resource.Project) {
+        throw new NotFoundException({
+          message: 'The project does not exist.'
+        });
+      }
+      else {
+        throw new NotFoundException({
+          message: 'The target user does not exist.'
+        });
+      }
+    }
+
+    if (result === OperationResult.Forbidden) {
+      if (resource === Resource.Project) {
+        throw new ForbiddenException({
+          message: 'Cannot add a new member since you are not the owner of this project.'
+        });
+      }
+      else {
+        throw new ForbiddenException({
+          message: 'Cannot add a new member who is banned.'
+        });
+      }
+    }
+
+    if (result == OperationResult.Conflict) {
+      throw new ConflictException({
+        message: 'The target user has already been in this project.'
+      });
     }
   }
 
