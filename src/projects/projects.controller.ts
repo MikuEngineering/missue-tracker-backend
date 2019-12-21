@@ -314,6 +314,29 @@ export class ProjectsController {
     response.status(HttpStatus.NO_CONTENT).send();
   }
 
+  @Get(':id/labels')
+  async readAllLabelsOfProject(
+    @Param('id', IdValidationPipe) projectId: number,
+    @Request() request: ExpressRequest,
+  ) {
+    const user = request.user as SessionUser;
+    const userId: number | undefined = user && user.id;
+    const permission: Permission | undefined = user && user.permission;
+    const [result, labelIds] = await this.projectsService.readAllLabelIds(
+      projectId,
+      userId,
+      permission,
+    );
+
+    if (result === OperationResult.NotFound) {
+      throw new NotFoundException({
+        message: 'The project does not exist.',
+      });
+    }
+
+    return { labels: labelIds };
+  }
+
   @UseGuards(AuthenticatedGuard)
   @Post(':id/labels')
   async addNewLabelToProject(

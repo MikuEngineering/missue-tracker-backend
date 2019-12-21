@@ -453,4 +453,29 @@ export class ProjectsService {
       projectId
     });
   }
+
+  async readAllLabelIds(
+    projectId: number,
+    userId?: number,
+    permission?: Permission,
+  ): Promise<[OperationResult, number[]?]>
+  {
+    const project = await this.projectRepository.findOne(projectId, {
+      relations: ['participants', 'labels'],
+    });
+
+    if (!project) {
+      return [OperationResult.NotFound, null];
+    }
+
+    const isPrivate = project.privacy === Privacy.Private;
+    const isParticipant = userId && project.participants.some(user => user.id === userId);
+    const isAdmin = permission && permission === Permission.Admin;
+    if (isPrivate && !isParticipant && !isAdmin) {
+      return [OperationResult.NotFound, null];
+    }
+
+    const labelIds = project.labels.map(label => label.id);
+    return [OperationResult.Success, labelIds];
+  }
 }
