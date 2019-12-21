@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Label } from './labels.entity';
 import { CreateLabelDto } from './dto/create-label.dto';
+import { ReadLabelDto } from './dto/read-label.dto';
 import { OperationResult } from '../common/types/operation-result.type';
 
 @Injectable()
@@ -49,5 +50,20 @@ export class LabelsService {
       project: { id: createLabelDto.projectId },
     });
     await this.labelRepository.save(label);
+  }
+
+  async readOneById(labelId: number): Promise<[OperationResult, ReadLabelDto?]> {
+    const label = await this.labelRepository.findOne(labelId);
+    if (!label) {
+      return [OperationResult.NotFound, null];
+    }
+
+    const readLabelDto: ReadLabelDto = {
+      name: label.name,
+      description: label.description,
+      color: label.color,
+      deprecated: label.deprecated,
+    };
+    return [OperationResult.Success, readLabelDto];
   }
 }
