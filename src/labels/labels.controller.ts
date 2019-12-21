@@ -2,9 +2,12 @@ import {
   Controller,
   Get,
   Put,
+  Delete,
   Param,
   Body,
   Request,
+  HttpCode,
+  HttpStatus,
   UseGuards,
   NotFoundException,
   ForbiddenException,
@@ -66,6 +69,32 @@ export class LabelsController {
       case OperationResult.Conflict:
         throw new ConflictException({
           message: 'Cannot update the label since there is another label having the same name.',
+        });
+    }
+  }
+
+  @UseGuards(AuthenticatedGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Delete(':id')
+  async removeLabelById(
+    @Param('id', IdValidationPipe) labelId: number,
+    @Request() request: ExpressRequest,
+  ) {
+    const { id: userId, permission } = request.user as SessionUser;
+    const result = await this.labelsService.removeOneById(
+      labelId,
+      userId,
+      permission,
+    );
+
+    switch (result) {
+      case OperationResult.NotFound:
+        throw new NotFoundException({
+          message: 'The label does not exist.',
+        });
+      case OperationResult.Forbidden:
+        throw new ForbiddenException({
+          message: 'Cannot remove the label since you are not the owner of this project.',
         });
     }
   }
