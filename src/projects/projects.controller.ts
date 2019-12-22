@@ -184,8 +184,14 @@ export class ProjectsController {
     );
 
     switch (result) {
-      case OperationResult.NotFound: throw new NotFoundException();
-      case OperationResult.Forbidden: throw new ForbiddenException();
+      case OperationResult.NotFound:
+        throw new NotFoundException({
+          message: 'The project does not exist.',
+        });
+      case OperationResult.Forbidden:
+        throw new ForbiddenException({
+          message: 'Cannot update the privacy since you are not the owner of this project.',
+        });
     }
   }
 
