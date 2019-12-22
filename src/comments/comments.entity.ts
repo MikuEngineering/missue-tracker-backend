@@ -4,6 +4,7 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  Index,
   ManyToOne,
 } from 'typeorm';
 import { User } from '../users/users.entity';
@@ -15,6 +16,7 @@ export enum Status {
 }
 
 @Entity()
+@Index(['createdTime', 'issue'])
 export class Comment {
   @PrimaryGeneratedColumn()
   id: number;
