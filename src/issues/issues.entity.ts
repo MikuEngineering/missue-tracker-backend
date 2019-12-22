@@ -4,6 +4,7 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  Index,
   ManyToOne,
   ManyToMany,
   JoinTable,
@@ -18,9 +19,13 @@ export enum Status {
 };
 
 @Entity()
+@Index(['number', 'project'], { unique: true })
 export class Issue {
   @PrimaryGeneratedColumn()
   id: number;
+
+  @Column({ type: 'int' })
+  number: number;
 
   @Column()
   title: string;
