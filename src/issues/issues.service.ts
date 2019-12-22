@@ -74,7 +74,7 @@ export class IssuesService {
       .leftJoinAndSelect('issue.labels', 'labels')
       .leftJoinAndSelect('project.participants', 'participants')
       .where('issue.id = :issueId', { issueId })
-      .select(['issue.title', 'issue.createdTime', 'issue.updatedTime'])
+      .select(['issue.title', 'issue.number', 'issue.createdTime', 'issue.updatedTime'])
       .addSelect(['project.id', 'project.privacy'])
       .addSelect('participants.id')
       .addSelect('owner.id')
@@ -98,6 +98,7 @@ export class IssuesService {
     const readIssueDto: ReadIssueDto = {
       title: issue.title,
       owner: owner.id,
+      number: issue.number,
       labels: unwrapIdsFromObjects(labels),
       assignees: unwrapIdsFromObjects(assignees),
       createdTime: issue.createdTime.toJSON(),
