@@ -41,15 +41,14 @@ export class ProjectsController {
   async create(
     @Body(ValidationPipe) createProjectDto: CreateProjectDto,
     @Request() request: ExpressRequest,
-    @Response() response: ExpressResponse,
   ) {
-    const user: User = request.user as User;
-    const result = await this.projectsService.create(createProjectDto, user);
-    if (result) {
-      response.status(HttpStatus.CREATED).send();
-      return;
+    const { id: userId } = request.user as SessionUser;
+    const result = await this.projectsService.create(createProjectDto, userId);
+    if (!result) {
+      throw new ConflictException({
+        message: 'Cannot create the new project since one of your projects has the same name this project has.',
+      });
     }
-    response.status(HttpStatus.CONFLICT).send();
   }
 
   @Get()
