@@ -1,4 +1,11 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  ManyToOne,
+} from 'typeorm';
 import { User } from '../users/users.entity';
 import { Project } from '../projects/projects.entity';
 import { Label } from '../labels/labels.entity';
@@ -24,4 +31,7 @@ export class Issue {
 
   @UpdateDateColumn()
   updatedTime: Date;
+
+  @ManyToOne(_ => Project, project => project.issues)
+  project: Project;
 }

@@ -2,6 +2,7 @@ import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, OneToMany, ManyToMan
 import { User } from '../users/users.entity';
 import { Tag } from '../tags/tags.entity';
 import { Label } from '../labels/labels.entity';
+import { Issue } from '../issues/issues.entity';
 
 export enum Privacy {
   Public = 0,
@@ -44,4 +45,7 @@ export class Project {
 
   @OneToMany(_ => Label, label => label.project)
   labels: Label[];
+
+  @OneToMany(_ => Issue, issue => issue.project)
+  issues: Issue[];
 }
