@@ -21,6 +21,7 @@ import { TransferProjectDto } from './dto/transfer-project.dto';
 import { PrivacyProjectDto } from './dto/privacy-project.dto';
 import { MemberIdDto } from './dto/member-id.dto';
 import { CreateLabelDto } from './dto/labels/create-label.dto';
+import { CreateIssueDto } from './dto/issues/create-issue.dto';
 import { ProjectsService } from './projects.service';
 import { Permission } from '../users/users.entity';
 import { AuthenticatedGuard } from '../common/guards/authenticated.guard';
@@ -385,5 +386,14 @@ export class ProjectsController {
           message: 'Cannot add the new label since there is another label having the same name.'
         });
     }
+  }
+
+  @UseGuards(AuthenticatedGuard)
+  @Post(':id/issues')
+  async createNewIssueToProject(
+    @Param('id', IdValidationPipe) projectId: number,
+    @Body(ValidationPipe) createIssueDto: CreateIssueDto,
+    @Request() request: ExpressRequest,
+  ) {
   }
 }
