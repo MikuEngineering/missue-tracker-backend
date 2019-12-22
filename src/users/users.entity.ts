@@ -51,4 +51,8 @@ export class User {
   @ManyToMany(_ => Issue, issue => issue.assignees)
   @JoinTable()
   assignedIssues: Issue[];
+
+  @ManyToMany(_ => Issue, issue => issue.subscribers)
+  @JoinTable()
+  subscribedIssues: Issue[];
 }

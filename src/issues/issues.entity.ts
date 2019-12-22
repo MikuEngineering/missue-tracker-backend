@@ -43,4 +43,7 @@ export class Issue {
 
   @ManyToMany(_ => User, user => user.assignedIssues)
   assignees: User[];
+
+  @ManyToMany(_ => User, user => user.subscribedIssues)
+  subscribers: User[];
 }
