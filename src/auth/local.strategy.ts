@@ -15,11 +15,15 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
     const [result, user] = await this.authService.validateUser(username, password);
 
     if (result === LoginResult.Forbidden) {
-      throw new ForbiddenException();
+      throw new ForbiddenException({
+        message: 'Cannot log in since this account is banned.',
+      });
     }
 
     if (result === LoginResult.Failure) {
-      throw new UnauthorizedException();
+      throw new UnauthorizedException({
+        message: 'You username or password is incorrect.',
+      });
     }
 
     return user;

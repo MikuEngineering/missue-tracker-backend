@@ -6,7 +6,6 @@ import {
   Put,
   Delete,
   Request,
-  Response,
   HttpCode,
   Param,
   UseGuards,
@@ -15,7 +14,7 @@ import {
   NotFoundException,
   ConflictException
 } from '@nestjs/common';
-import { Request as ExpressRequest, Response as ExpressResponse } from 'express';
+import { Request as ExpressRequest } from 'express';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { TransferProjectDto } from './dto/transfer-project.dto';
@@ -23,7 +22,7 @@ import { PrivacyProjectDto } from './dto/privacy-project.dto';
 import { MemberIdDto } from './dto/member-id.dto';
 import { CreateLabelDto } from './dto/labels/create-label.dto';
 import { ProjectsService } from './projects.service';
-import { User, Permission } from '../users/users.entity';
+import { Permission } from '../users/users.entity';
 import { AuthenticatedGuard } from '../common/guards/authenticated.guard';
 import { ValidationPipe } from '../common/pipes/validation.pipe';
 import { IdValidationPipe } from '../common/pipes/id-validation.pipe';
@@ -41,15 +40,14 @@ export class ProjectsController {
   async create(
     @Body(ValidationPipe) createProjectDto: CreateProjectDto,
     @Request() request: ExpressRequest,
-    @Response() response: ExpressResponse,
   ) {
-    const user: User = request.user as User;
-    const result = await this.projectsService.create(createProjectDto, user);
-    if (result) {
-      response.status(HttpStatus.CREATED).send();
-      return;
+    const { id: userId } = request.user as SessionUser;
+    const result = await this.projectsService.create(createProjectDto, userId);
+    if (!result) {
+      throw new ConflictException({
+        message: 'Cannot create the new project since one of your projects has the same name this project has.',
+      });
     }
-    response.status(HttpStatus.CONFLICT).send();
   }
 
   @Get()
@@ -71,7 +69,9 @@ export class ProjectsController {
       );
 
     if (result === OperationResult.NotFound) {
-      throw new NotFoundException();
+      throw new NotFoundException({
+        message: 'The project does not exist.',
+      });
     }
 
     return projectId;
@@ -90,7 +90,9 @@ export class ProjectsController {
       await this.projectsService.readProjectById(projectId, userId, permission);
 
     if (result === OperationResult.NotFound) {
-      throw new NotFoundException();
+      throw new NotFoundException({
+        message: 'This project does not exist.',
+      });
     }
 
     return readProjectDto;
@@ -107,9 +109,18 @@ export class ProjectsController {
     const result = await this.projectsService.updateProjectById(updateProjectDto, projectId, userId, permission);
 
     switch (result) {
-      case OperationResult.NotFound: throw new NotFoundException();
-      case OperationResult.Forbidden: throw new ForbiddenException();
-      case OperationResult.Conflict: throw new ConflictException();
+      case OperationResult.NotFound:
+        throw new NotFoundException({
+          message: 'The project does not exist.',
+        });
+      case OperationResult.Forbidden:
+        throw new ForbiddenException({
+          message: 'Cannot update this project since you are not a member of this project.',
+        });
+      case OperationResult.Conflict:
+        throw new ConflictException({
+          message: 'Cannot update this project since one of the owner\'s projects has the same name.',
+        });
     }
   }
 
@@ -172,8 +183,14 @@ export class ProjectsController {
     );
 
     switch (result) {
-      case OperationResult.NotFound: throw new NotFoundException();
-      case OperationResult.Forbidden: throw new ForbiddenException();
+      case OperationResult.NotFound:
+        throw new NotFoundException({
+          message: 'The project does not exist.',
+        });
+      case OperationResult.Forbidden:
+        throw new ForbiddenException({
+          message: 'Cannot update the privacy since you are not the owner of this project.',
+        });
     }
   }
 
@@ -242,7 +259,7 @@ export class ProjectsController {
       }
     }
 
-    if (result == OperationResult.Conflict) {
+    if (result === OperationResult.Conflict) {
       throw new ConflictException({
         message: 'The target user has already been in this project.'
       });
@@ -294,24 +311,26 @@ export class ProjectsController {
   }
 
   @UseGuards(AuthenticatedGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
   @Delete(':id')
   async deleteProject(
     @Param('id', IdValidationPipe) projectId: number,
     @Request() request: ExpressRequest,
-    @Response() response: ExpressResponse
   ) {
     const { id: userId, permission } = request.user as SessionUser;
     const result = await this.projectsService.deleteProjectById(projectId, userId, permission);
 
     if (result === OperationResult.NotFound) {
-      throw new NotFoundException();
+      throw new NotFoundException({
+        message: 'The project does not exist.',
+      });
     }
 
     if (result === OperationResult.Forbidden) {
-      throw new ForbiddenException();
+      throw new ForbiddenException({
+        message: 'Cannot delete this project since you are not the owner of it.',
+      });
     }
-
-    response.status(HttpStatus.NO_CONTENT).send();
   }
 
   @Get(':id/labels')

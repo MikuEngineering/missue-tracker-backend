@@ -10,7 +10,9 @@ export class AdminGuard implements CanActivate {
     const user = request.user as SessionUser;
 
     if (user.permission !== Permission.Admin) {
-      throw new ForbiddenException();
+      throw new ForbiddenException({
+        message: 'Cannot execute this operation since you are not an admin.',
+      });
     }
 
     return true;

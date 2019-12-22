@@ -32,10 +32,10 @@ export class ProjectsService {
     private readonly labelsService: LabelsService,
   ) {}
 
-  async create(createProjectDto: CreateProjectDto, user: User): Promise<boolean> {
+  async create(createProjectDto: CreateProjectDto, userId: number): Promise<boolean> {
     const project = await this.projectRepository.findOne({
       name: createProjectDto.name,
-      owner: { id: user.id }
+      owner: { id: userId }
     });
 
     if (project) {
@@ -43,11 +43,11 @@ export class ProjectsService {
     }
 
     let newProject = this.projectRepository.create({
-      owner: { id: user.id },
+      owner: { id: userId },
       name: createProjectDto.name,
       description: createProjectDto.description,
       privacy: createProjectDto.privacy,
-      participants: [{ id: user.id }]
+      participants: [{ id: userId }]
     });
 
     newProject = await this.projectRepository.save(newProject);
