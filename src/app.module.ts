@@ -5,6 +5,7 @@ import { Project } from './projects/projects.entity';
 import { Tag } from './tags/tags.entity';
 import { Label } from './labels/labels.entity';
 import { Issue } from './issues/issues.entity';
+import { Comment } from './comments/comments.entity';
 import { UsersModule } from './users/users.module';
 import { ProjectsModule } from './projects/projects.module';
 import { TagsModule } from './tags/tags.module';
@@ -12,6 +13,7 @@ import { AuthModule } from './auth/auth.module';
 import { SessionModule } from './session/session.module';
 import { LabelsModule } from './labels/labels.module';
 import { IssuesModule } from './issues/issues.module';
+import { CommentsModule } from './comments/comments.module';
 
 const {
   DB_HOST,
@@ -35,6 +37,7 @@ const {
         Tag,
         Label,
         Issue,
+        Comment,
       ],
       synchronize: true,
     }),
@@ -45,6 +48,7 @@ const {
     SessionModule,
     LabelsModule,
     IssuesModule,
+    CommentsModule,
   ],
 })
 export class AppModule {}

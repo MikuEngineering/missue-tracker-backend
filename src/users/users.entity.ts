@@ -1,6 +1,7 @@
 import { Entity, Column, PrimaryGeneratedColumn, OneToMany, ManyToMany, JoinTable } from 'typeorm';
 import { Project } from '../projects/projects.entity';
 import { Issue } from '../issues/issues.entity';
+import { Comment } from '../comments/comments.entity';
 
 export enum Status {
   Normal = 0,
@@ -58,4 +59,7 @@ export class User {
 
   @OneToMany(_ => Issue, issue => issue.owner)
   ownedIssues: Issue[];
+
+  @OneToMany(_ => Comment, comment => comment.owner)
+  ownedComments: Comment[];
 }
