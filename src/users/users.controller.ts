@@ -10,10 +10,12 @@ import {
   Response,
   Request,
   HttpStatus,
+  HttpCode,
   UseGuards,
-  UnauthorizedException,
   ForbiddenException,
-  NotFoundException
+  NotFoundException,
+  BadRequestException,
+  ConflictException,
 } from '@nestjs/common';
 import { Request as ExpressRequest, Response as ExpressResponse } from 'express';
 import { UsersService } from './users.service';
@@ -34,25 +36,29 @@ export class UsersController {
   @Get()
   async readUsers(@Query('username') username: string) {
     if (!username) {
-      throw new UnauthorizedException();
+      throw new BadRequestException({
+        message: 'The query parameter username is required.',
+      });
     }
 
     const user = await this.usersService.findOneByUsername(username);
     if (!user) {
-      throw new NotFoundException();
+      throw new NotFoundException({
+        message: 'The user does not exist.',
+      });
     }
 
     return { id: user.id };
   }
 
   @Post()
-  async register(@Body(ValidationPipe) registerUserDto: RegisterUserDto, @Response() response: ExpressResponse) {
+  async register(@Body(ValidationPipe) registerUserDto: RegisterUserDto) {
     const result = await this.usersService.register(registerUserDto);
-    if (result) {
-      response.status(HttpStatus.CREATED).send();
-      return;
+    if (!result) {
+      throw new ConflictException({
+        message: 'The username has already been taken.',
+      });
     }
-    response.status(HttpStatus.CONFLICT).send();
   }
 
   @UseGuards(AuthenticatedGuard)
@@ -64,13 +70,19 @@ export class UsersController {
   ) {
     const user: SessionUser = request.user as SessionUser;
 
-    if (user.id !== userId && user.permission !== Permission.Admin) {
-      throw new ForbiddenException()
+    const isProfileOwner = user.id === userId;
+    const isAdmin = user.permission === Permission.Admin;
+    if (!isProfileOwner && !isAdmin) {
+      throw new ForbiddenException({
+        message: 'Cannot edit this profile since you are not the owner of it.',
+      });
     }
 
     const result = await this.usersService.updateProfile(updateProfileDto, userId);
     if (!result) {
-      throw new NotFoundException();
+      throw new NotFoundException({
+        message: 'The profile does not exist.',
+      });
     }
   }
 
@@ -91,19 +103,22 @@ export class UsersController {
   async banUser(@Param('id', IdValidationPipe) userId: number) {
     const result = await this.usersService.banUserById(userId);
     if (!result) {
-      throw new NotFoundException();
+      throw new NotFoundException({
+        message: 'The user does not exist.',
+      });
     }
   }
 
   @UseGuards(AuthenticatedGuard, AdminGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
   @Delete(':id/ban')
-  async unbanUser(@Param('id', IdValidationPipe) userId: number, @Response() response: ExpressResponse) {
+  async unbanUser(@Param('id', IdValidationPipe) userId: number) {
     const result = await this.usersService.unbanUserById(userId);
     if (!result) {
-      throw new NotFoundException();
+      throw new NotFoundException({
+        message: 'The user does not exist.',
+      });
     }
-
-    response.status(HttpStatus.NO_CONTENT).send();
   }
 
   @Get(':id/projects')
@@ -111,7 +126,9 @@ export class UsersController {
     const [result, projectIds] = await this.usersService.readAllProjectIdsById(userId);
 
     if (result === OperationResult.NotFound) {
-      throw new NotFoundException();
+      throw new NotFoundException({
+        message: 'The user does not exist.',
+      });
     }
 
     return { projects: projectIds };
