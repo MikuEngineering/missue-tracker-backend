@@ -13,10 +13,14 @@ export class AuthenticatedGuard implements CanActivate {
     const method = context.getHandler();
 
     if (classSignature.name === 'SessionController' && method.name === 'checkLogin') {
-      throw new NotFoundException();
+      throw new NotFoundException({
+        message: 'You are not logged in.',
+      });
     }
     else {
-      throw new UnauthorizedException();
+      throw new UnauthorizedException({
+        message: 'You are not logged in.',
+      });
     }
   }
 }
