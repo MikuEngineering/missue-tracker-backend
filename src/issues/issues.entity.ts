@@ -46,4 +46,7 @@ export class Issue {
 
   @ManyToMany(_ => User, user => user.subscribedIssues)
   subscribers: User[];
+
+  @ManyToOne(_ => User, user => user.ownedIssues)
+  owner: User;
 }

@@ -55,4 +55,7 @@ export class User {
   @ManyToMany(_ => Issue, issue => issue.subscribers)
   @JoinTable()
   subscribedIssues: Issue[];
+
+  @OneToMany(_ => Issue, issue => issue.owner)
+  ownedIssues: Issue[];
 }
