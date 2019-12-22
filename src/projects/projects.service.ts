@@ -7,11 +7,13 @@ import { CreateProjectDto } from './dto/create-project.dto';
 import { ReadProjectDto } from './dto/read-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { CreateLabelDto } from './dto/labels/create-label.dto';
+import { CreateIssueDto } from './dto/issues/create-issue.dto';
 
 import { UsersService } from '../users/users.service';
-import { User, Permission, Status as UserStatue } from '../users/users.entity';
+import { Permission, Status as UserStatue } from '../users/users.entity';
 import { TagsService } from '../tags/tags.service';
 import { LabelsService } from '../labels/labels.service';
+import { IssuesService } from '../issues/issues.service';
 import { OperationResult } from '../common/types/operation-result.type';
 import { Resource } from '../common/types/resource.type';
 
@@ -30,6 +32,7 @@ export class ProjectsService {
     private readonly tagsService: TagsService,
     private readonly userService: UsersService,
     private readonly labelsService: LabelsService,
+    private readonly issuesService: IssuesService,
   ) {}
 
   async create(createProjectDto: CreateProjectDto, userId: number): Promise<boolean> {
@@ -477,5 +480,61 @@ export class ProjectsService {
 
     const labelIds = project.labels.map(label => label.id);
     return [OperationResult.Success, labelIds];
+  }
+
+  async createNewIssue(
+    projectId: number,
+    createIssueDto: CreateIssueDto,
+    userId: number,
+    permission: Permission,
+  ): Promise<[OperationResult, Resource]>
+  {
+    const project = await this.projectRepository.findOne(projectId, {
+      relations: ['participants'],
+    });
+
+    // Check the project's existence.
+    if (!project) {
+      return [OperationResult.NotFound, Resource.Project];
+    }
+
+    // If project is private, the user is not a participant of this project,
+    // and the user is not an admin, then reject this operation.
+    const { participants, privacy } = project;
+    const isPrivate = privacy === Privacy.Private;
+    const isParticipant = participants.some(user => user.id === userId);
+    const isAdmin = permission === Permission.Admin;
+    if (isPrivate && !isParticipant && !isAdmin) {
+      return [OperationResult.Forbidden, Resource.Project];
+    }
+
+    // Check if every assignee is a participant of this project.
+    const participantIds = participants.map(user => user.id);
+    const areAllAssigneesParticipants =
+      createIssueDto.assignees.every(id => participantIds.includes(id));
+    if (!areAllAssigneesParticipants) {
+      return [OperationResult.Forbidden, Resource.User];
+    }
+
+    // Check if every label belongs to this project.
+    const areAllLabelsOfProject = await this.labelsService.checkLabelsExistenceOfProject(
+      createIssueDto.labels,
+      projectId,
+    );
+    if (!areAllLabelsOfProject) {
+      return [OperationResult.Forbidden, Resource.Label];
+    }
+
+    // Create the new issue and the first comment of it.
+    await this.issuesService.create({
+      title: createIssueDto.title,
+      comment: { content: createIssueDto.comment.content },
+      labelIds: createIssueDto.labels,
+      assigneeIds: createIssueDto.assignees,
+      ownerId: userId,
+      projectId
+    });
+
+    return [OperationResult.Success, Resource.Issue];
   }
 }

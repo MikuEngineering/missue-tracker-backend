@@ -6,6 +6,7 @@ import { ProjectsService } from './projects.service';
 import { TagsModule } from '../tags/tags.module';
 import { UsersModule } from '../users/users.module';
 import { LabelsModule } from '../labels/labels.module';
+import { IssuesModule } from '../issues/issues.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { LabelsModule } from '../labels/labels.module';
     UsersModule,
     TagsModule,
     LabelsModule,
+    IssuesModule,
   ],
   controllers: [ProjectsController],
   providers: [ProjectsService],

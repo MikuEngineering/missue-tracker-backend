@@ -395,5 +395,35 @@ export class ProjectsController {
     @Body(ValidationPipe) createIssueDto: CreateIssueDto,
     @Request() request: ExpressRequest,
   ) {
+    const { id: userId, permission } = request.user as SessionUser;
+    const [result, resource] = await this.projectsService.createNewIssue(
+      projectId,
+      createIssueDto,
+      userId,
+      permission,
+    );
+
+    if (result === OperationResult.NotFound) {
+      throw new NotFoundException({
+        message: 'The project does not exist.',
+      });
+    }
+
+    if (result === OperationResult.Forbidden) {
+      switch (resource) {
+        case Resource.Project:
+          throw new ForbiddenException({
+            message: 'Cannot create the new issue since you are not a participant of this private project.',
+          });
+        case Resource.User:
+          throw new ForbiddenException({
+            message: 'Cannot create the new issue since one or many assignees do not participate this project.',
+          });
+        case Resource.Label:
+          throw new ForbiddenException({
+            message: 'Cannot create the new issue since one or many labels do not belong to this project.',
+          });
+      }
+    }
   }
 }
