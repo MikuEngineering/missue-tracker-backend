@@ -91,7 +91,9 @@ export class ProjectsController {
       await this.projectsService.readProjectById(projectId, userId, permission);
 
     if (result === OperationResult.NotFound) {
-      throw new NotFoundException();
+      throw new NotFoundException({
+        message: 'This project does not exist.',
+      });
     }
 
     return readProjectDto;
