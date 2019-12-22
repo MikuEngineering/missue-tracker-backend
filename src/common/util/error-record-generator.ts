@@ -19,23 +19,26 @@ export function createGenerator(type: string) {
     // Record each error
     errors.forEach((error) => {
       // Get all errors' name
-      const constraintNames = Object.keys(error.constraints);
+      const { constraints } = error;
+      const constraintNames = constraints && Object.keys(constraints);
   
       // Memorize error path
       const currentField = [...field, error.property];
 
-      const records: ErrorRecord[] = constraintNames.map((name) => ({
-        type,
-        field: currentField,
-        code: name,
-        message: error.constraints[name],
-      }));
+      if (constraintNames) {
+        const records: ErrorRecord[] = constraintNames.map((name) => ({
+          type,
+          field: currentField,
+          code: name,
+          message: error.constraints[name],
+        }));
 
-      results.push(...records);
+        results.push(...records);
+      }
   
       // If there is any inner error, then go down and record them.
       if (error.children.length > 0) {
-        generate(error.children, field);
+        generate(error.children, currentField);
       }
     });
 
