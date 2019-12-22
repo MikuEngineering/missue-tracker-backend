@@ -7,6 +7,7 @@ import {
   ManyToOne,
 } from 'typeorm';
 import { User } from '../users/users.entity';
+import { Issue } from '../issues/issues.entity';
 
 export enum Status {
   Normal = 0,
@@ -32,4 +33,7 @@ export class Comment {
 
   @ManyToOne(_ => User, user => user.ownedComments)
   owner: User;
+
+  @ManyToOne(_ => Issue, issue => issue.comments)
+  issue: Issue;
 }

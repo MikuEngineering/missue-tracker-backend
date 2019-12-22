@@ -5,6 +5,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   Index,
+  OneToMany,
   ManyToOne,
   ManyToMany,
   JoinTable,
@@ -12,6 +13,7 @@ import {
 import { User } from '../users/users.entity';
 import { Project } from '../projects/projects.entity';
 import { Label } from '../labels/labels.entity';
+import { Comment } from '../comments/comments.entity';
 
 export enum Status {
   Open = 0,
@@ -54,4 +56,7 @@ export class Issue {
 
   @ManyToOne(_ => User, user => user.ownedIssues)
   owner: User;
+
+  @OneToMany(_ => Comment, comment => comment.issue)
+  comments: Comment[];
 }
