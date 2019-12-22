@@ -260,7 +260,7 @@ export class ProjectsController {
       }
     }
 
-    if (result == OperationResult.Conflict) {
+    if (result === OperationResult.Conflict) {
       throw new ConflictException({
         message: 'The target user has already been in this project.'
       });
