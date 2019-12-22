@@ -388,6 +388,30 @@ export class ProjectsController {
     }
   }
 
+  @Get(':id/issues')
+  async readAllIssues(
+    @Param('id', IdValidationPipe) projectId: number,
+    @Request() request: ExpressRequest,
+  ) {
+    const user: SessionUser | undefined = request.user as SessionUser;
+    const userId: number | undefined = user && user.id;
+    const permissesion: Permission | undefined = user && user.permission;
+
+    const [result, issueIds] = await this.projectsService.readAllIssueIds(
+      projectId,
+      userId,
+      permissesion,
+    );
+
+    if (result === OperationResult.NotFound) {
+      throw new NotFoundException({
+        message: 'The project does not exist.',
+      });
+    }
+
+    return { issues: issueIds };
+  }
+
   @UseGuards(AuthenticatedGuard)
   @Post(':id/issues')
   async createNewIssueToProject(
