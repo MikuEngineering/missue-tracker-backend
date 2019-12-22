@@ -110,9 +110,18 @@ export class ProjectsController {
     const result = await this.projectsService.updateProjectById(updateProjectDto, projectId, userId, permission);
 
     switch (result) {
-      case OperationResult.NotFound: throw new NotFoundException();
-      case OperationResult.Forbidden: throw new ForbiddenException();
-      case OperationResult.Conflict: throw new ConflictException();
+      case OperationResult.NotFound:
+        throw new NotFoundException({
+          message: 'The project does not exist.',
+        });
+      case OperationResult.Forbidden:
+        throw new ForbiddenException({
+          message: 'Cannot update this project since you are not a member of this project.',
+        });
+      case OperationResult.Conflict:
+        throw new ConflictException({
+          message: 'Cannot update this project since one of the owner\'s projects has the same name.',
+        });
     }
   }
 
