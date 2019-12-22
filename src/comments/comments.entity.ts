@@ -24,7 +24,7 @@ export class Comment {
   @Column()
   content: string;
 
-  @Column()
+  @Column({ default: Status.Normal })
   status: Status;
 
   @CreateDateColumn()

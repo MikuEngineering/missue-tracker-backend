@@ -32,7 +32,7 @@ export class Issue {
   @Column()
   title: string;
 
-  @Column()
+  @Column({ default: Status.Open })
   status: string;
 
   @CreateDateColumn()

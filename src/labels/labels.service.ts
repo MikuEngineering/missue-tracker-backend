@@ -1,6 +1,6 @@
-import { Injectable, Inject, forwardRef } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Not } from 'typeorm';
+import { Repository, Not, In } from 'typeorm';
 import { Label } from './labels.entity';
 import { CreateLabelDto } from './dto/create-label.dto';
 import { ReadLabelDto } from './dto/read-label.dto';
@@ -138,5 +138,20 @@ export class LabelsService {
 
     await this.labelRepository.remove(label);
     return OperationResult.Success;
+  }
+
+  async checkLabelsExistenceOfProject(
+    labelIds: number[],
+    projectId: number,
+  ): Promise<boolean>
+  {
+    const count = await this.labelRepository.count({
+      where: {
+        id: In(labelIds),
+        project: { id: projectId },
+      },
+    });
+
+    return count === labelIds.length;
   }
 }

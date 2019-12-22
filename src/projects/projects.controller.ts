@@ -21,6 +21,7 @@ import { TransferProjectDto } from './dto/transfer-project.dto';
 import { PrivacyProjectDto } from './dto/privacy-project.dto';
 import { MemberIdDto } from './dto/member-id.dto';
 import { CreateLabelDto } from './dto/labels/create-label.dto';
+import { CreateIssueDto } from './dto/issues/create-issue.dto';
 import { ProjectsService } from './projects.service';
 import { Permission } from '../users/users.entity';
 import { AuthenticatedGuard } from '../common/guards/authenticated.guard';
@@ -384,6 +385,45 @@ export class ProjectsController {
         throw new ConflictException({
           message: 'Cannot add the new label since there is another label having the same name.'
         });
+    }
+  }
+
+  @UseGuards(AuthenticatedGuard)
+  @Post(':id/issues')
+  async createNewIssueToProject(
+    @Param('id', IdValidationPipe) projectId: number,
+    @Body(ValidationPipe) createIssueDto: CreateIssueDto,
+    @Request() request: ExpressRequest,
+  ) {
+    const { id: userId, permission } = request.user as SessionUser;
+    const [result, resource] = await this.projectsService.createNewIssue(
+      projectId,
+      createIssueDto,
+      userId,
+      permission,
+    );
+
+    if (result === OperationResult.NotFound) {
+      throw new NotFoundException({
+        message: 'The project does not exist.',
+      });
+    }
+
+    if (result === OperationResult.Forbidden) {
+      switch (resource) {
+        case Resource.Project:
+          throw new ForbiddenException({
+            message: 'Cannot create the new issue since you are not a participant of this private project.',
+          });
+        case Resource.User:
+          throw new ForbiddenException({
+            message: 'Cannot create the new issue since one or many assignees do not participate this project.',
+          });
+        case Resource.Label:
+          throw new ForbiddenException({
+            message: 'Cannot create the new issue since one or many labels do not belong to this project.',
+          });
+      }
     }
   }
 }
