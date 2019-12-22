@@ -40,4 +40,7 @@ export class Issue {
   @ManyToMany(_ => Label, label => label.issues)
   @JoinTable()
   labels: Label[];
+
+  @ManyToMany(_ => User, user => user.assignedIssues)
+  assignees: User[];
 }
