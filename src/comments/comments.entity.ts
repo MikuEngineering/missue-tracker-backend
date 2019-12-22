@@ -4,7 +4,9 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  ManyToOne,
 } from 'typeorm';
+import { User } from '../users/users.entity';
 
 export enum Status {
   Normal = 0,
@@ -27,4 +29,7 @@ export class Comment {
 
   @UpdateDateColumn()
   updatedTime: Date;
+
+  @ManyToOne(_ => User, user => user.ownedComments)
+  owner: User;
 }
