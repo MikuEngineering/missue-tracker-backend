@@ -70,7 +70,9 @@ export class ProjectsController {
       );
 
     if (result === OperationResult.NotFound) {
-      throw new NotFoundException();
+      throw new NotFoundException({
+        message: 'The project does not exist.',
+      });
     }
 
     return projectId;
