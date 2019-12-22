@@ -1,5 +1,6 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, ManyToMany } from 'typeorm';
 import { Project } from '../projects/projects.entity';
+import { Issue } from '../issues/issues.entity';
 
 @Entity()
 export class Label {
@@ -20,4 +21,7 @@ export class Label {
 
   @ManyToOne(_ => Project, project => project.labels, { cascade: ['remove'], nullable: false })
   project: Project
+
+  @ManyToMany(_ => Issue, issue => issue.labels)
+  issues: Issue[];
 };

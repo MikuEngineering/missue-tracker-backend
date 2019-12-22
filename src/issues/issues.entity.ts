@@ -5,6 +5,8 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   ManyToOne,
+  ManyToMany,
+  JoinTable,
 } from 'typeorm';
 import { User } from '../users/users.entity';
 import { Project } from '../projects/projects.entity';
@@ -34,4 +36,8 @@ export class Issue {
 
   @ManyToOne(_ => Project, project => project.issues)
   project: Project;
+
+  @ManyToMany(_ => Label, label => label.issues)
+  @JoinTable()
+  labels: Label[];
 }
