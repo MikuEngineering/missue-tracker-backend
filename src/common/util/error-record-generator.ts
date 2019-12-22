@@ -18,27 +18,31 @@ export function createGenerator(type: string) {
   function generate(errors: ValidationError[], field: string[] = []): ErrorRecord[] {
     // Record each error
     errors.forEach((error) => {
+      const { constraints, children, property } = error;
+
       // Get all errors' name
-      const { constraints } = error;
       const constraintNames = constraints && Object.keys(constraints);
   
       // Memorize error path
-      const currentField = [...field, error.property];
+      let currentField = field;
+      if (field[field.length - 1] !== property) { // Escapse nested duplications.
+        currentField = [...field, property];
+      }
 
       if (constraintNames) {
         const records: ErrorRecord[] = constraintNames.map((name) => ({
           type,
           field: currentField,
           code: name,
-          message: error.constraints[name],
+          message: constraints[name],
         }));
 
         results.push(...records);
       }
   
       // If there is any inner error, then go down and record them.
-      if (error.children.length > 0) {
-        generate(error.children, currentField);
+      if (children && children.length > 0) {
+        generate(children, currentField);
       }
     });
 
