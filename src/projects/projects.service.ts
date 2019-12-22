@@ -537,4 +537,31 @@ export class ProjectsService {
 
     return [OperationResult.Success, Resource.Issue];
   }
+
+  async readAllIssueIds(
+    projectId: number,
+    userId: number,
+    permission: Permission,
+  ): Promise<[OperationResult, number[]?]>
+  {
+    const project = await this.projectRepository.findOne(projectId, {
+      relations: ['participants', 'issues'],
+    });
+
+    if (!project) {
+      return [OperationResult.NotFound, null];
+    }
+
+    if (project.privacy === Privacy.Private) {
+      const { participants } = project;
+      const isAdmin = permission === Permission.Admin;
+      const isParticipant = participants.some(user => user.id === userId);
+      if (!isParticipant && !isAdmin) {
+        return [OperationResult.NotFound, null];
+      }
+    }
+
+    const issueIds = project.issues.map(issue => issue.id);
+    return [OperationResult.Success, issueIds];
+  }
 }
