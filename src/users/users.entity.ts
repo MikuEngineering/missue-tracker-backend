@@ -1,5 +1,6 @@
 import { Entity, Column, PrimaryGeneratedColumn, OneToMany, ManyToMany, JoinTable } from 'typeorm';
 import { Project } from '../projects/projects.entity';
+import { Issue } from '../issues/issues.entity';
 
 export enum Status {
   Normal = 0,
@@ -10,7 +11,6 @@ export enum Permission {
   User = 0,
   Admin,
 }
-
 
 @Entity()
 export class User {
@@ -47,4 +47,15 @@ export class User {
   @ManyToMany(_ => Project, project => project.participants)
   @JoinTable()
   participatingProjects: Project[];
+
+  @ManyToMany(_ => Issue, issue => issue.assignees)
+  @JoinTable()
+  assignedIssues: Issue[];
+
+  @ManyToMany(_ => Issue, issue => issue.subscribers)
+  @JoinTable()
+  subscribedIssues: Issue[];
+
+  @OneToMany(_ => Issue, issue => issue.owner)
+  ownedIssues: Issue[];
 }
