@@ -4,11 +4,15 @@ import { Repository } from 'typeorm';
 import { Issue } from './issues.entity'
 import { CreateIssueDto } from './dto/create-issue.dto';
 import { ReadIssueDto } from './dto/read-issue.dto';
+import { UpdateIssueDto } from './dto/update-issue.dto';
+import { Privacy } from '../projects/projects.entity';
+import { Resource } from '../common/types/resource.type';
 import { CommentsService } from '../comments/comments.service';
 import { CreateCommentDto } from '../comments/dto/create-comment.dto';
 import { Permission } from '../users/users.entity';
 import { OperationResult } from '../common/types/operation-result.type';
-import { Privacy } from 'src/projects/projects.entity';
+
+import { User } from '../users/users.entity';
 
 function wrapIdsIntoObjects(ids: number[]) {
   return ids.map(id => ({ id }));
@@ -105,5 +109,78 @@ export class IssuesService {
       updatedTime: issue.updatedTime.toJSON(),
     };
     return [OperationResult.Success, readIssueDto];
+  }
+
+  async updateOneById(
+    issueId: number,
+    updateIssueDto: UpdateIssueDto,
+    userId: number,
+    permission: Permission,
+  ): Promise<[OperationResult, Resource]>
+  {
+    const issue = await this.issueRepository
+      .createQueryBuilder('issue')
+      .leftJoinAndSelect('issue.project', 'project')
+      .leftJoinAndSelect('issue.owner', 'owner')
+      .leftJoinAndSelect('project.participants', 'participants')
+      .leftJoinAndSelect('project.labels', 'labels')
+      .where('issue.id = :issueId', { issueId })
+      .select(['issue', 'project.id', 'owner.id', 'participants.id', 'labels.id'])
+      .getOne();
+
+    if (!issue) {
+      return [OperationResult.NotFound, Resource.Issue];
+    }
+
+    // Check permissions.
+    const { project, owner } = issue;
+    const { participants, labels } = project;
+    const isOwner = owner.id === userId;
+    const isParticipant = participants.some(user => user.id === userId);
+    const isAdmin = permission === Permission.Admin;
+    if (!isOwner && !isParticipant && !isAdmin) {
+      return [OperationResult.Forbidden, Resource.Issue];
+    }
+
+    // Check if every assignee is a participant of this project.
+    const participantIds = participants.map(user => user.id);
+    const areAllAssigneesParticipants =
+      updateIssueDto.assignees.every(id => participantIds.includes(id));
+    if (!areAllAssigneesParticipants) {
+      return [OperationResult.Forbidden, Resource.User];
+    }
+
+    // Check if every label belongs to this project.
+    const labelIds = labels.map(label => label.id);
+    const areAllLabelsOfProject =
+      updateIssueDto.labels.every(id => labelIds.includes(id));
+    if (!areAllLabelsOfProject){
+      return [OperationResult.Forbidden, Resource.Label];
+    }
+
+    // Delete the old labels and assignees first.
+    await Promise.all([
+      this.issueRepository
+        .query('DELETE FROM issue_labels_label WHERE issueId = ?;', [issueId]),
+      this.issueRepository
+        .query('DELETE FROM user_assigned_issues_issue WHERE issueId = ?;', [issueId]),
+    ]);
+
+    // Insert the new labels and assignees.
+    await Promise.all([
+      this.issueRepository.update({ id: issueId }, { title: updateIssueDto.title }),
+      this.issueRepository
+        .query(
+          'INSERT INTO issue_labels_label (issueId, labelId) VALUES ?;',
+          [updateIssueDto.labels.map(labelId => [issueId, labelId])],
+        ),
+      this.issueRepository
+        .query(
+          'INSERT INTO user_assigned_issues_issue (issueId, userId) VALUES ?;',
+          [updateIssueDto.assignees.map(userId => [issueId, userId])],
+        ),
+    ]);
+
+    return [OperationResult.Success, Resource.Issue];
   }
 }
