@@ -5,6 +5,7 @@ import { Issue, Status } from './issues.entity'
 import { CreateIssueDto } from './dto/create-issue.dto';
 import { ReadIssueDto } from './dto/read-issue.dto';
 import { UpdateIssueDto } from './dto/update-issue.dto';
+import { CreateCommentDto as LocalCreateCommentDto } from './dto/create-comment.dto';
 import { Privacy } from '../projects/projects.entity';
 import { Resource } from '../common/types/resource.type';
 import { CommentsService } from '../comments/comments.service';
@@ -215,6 +216,41 @@ export class IssuesService {
       status: Status.Closed,
     });
 
+    return OperationResult.Success;
+  }
+
+  async createComment(
+    issueId: number,
+    createCommentDto: LocalCreateCommentDto,
+    userId: number,
+    permission: Permission,
+  ): Promise<OperationResult>
+  {
+    const issue = await this.issueRepository
+      .createQueryBuilder('issue')
+      .leftJoinAndSelect('issue.project', 'project')
+      .leftJoinAndSelect('project.participants', 'participant')
+      .where('issue.id = :issueId', { issueId })
+      .select(['issue.id', 'project.privacy', 'participant.id'])
+      .getOne();
+
+    if (!issue) {
+      return OperationResult.NotFound;
+    }
+
+    const { project } = issue;
+    const isPrivate = project.privacy === Privacy.Private;
+    const isParticipant = project.participants.some(user => user.id === userId);
+    const isAdmin = permission === Permission.Admin;
+    if (!isAdmin && isPrivate && !isParticipant) {
+      return OperationResult.NotFound;
+    }
+
+    await this.commentsService.create({
+      ownerId: userId,
+      content: createCommentDto.content,
+      issueId: issueId,
+    });
     return OperationResult.Success;
   }
 }

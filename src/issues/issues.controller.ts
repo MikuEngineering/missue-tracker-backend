@@ -1,6 +1,7 @@
 import {
   Controller,
   Get,
+  Post,
   Put,
   Delete,
   Param,
@@ -15,6 +16,7 @@ import {
 import { Request as ExpressRequest } from 'express';
 import { IssuesService } from './issues.service';
 import { UpdateIssueDto } from './dto/update-issue.dto';
+import { CreateCommentDto } from './dto/create-comment.dto';
 import { Permission } from '../users/users.entity';
 import { AuthenticatedGuard } from '../common/guards/authenticated.guard';
 import { ValidationPipe } from '../common/pipes/validation.pipe';
@@ -115,6 +117,28 @@ export class IssuesController {
         throw new NotFoundException({
           message: 'Cannot close this issue since you are not the owner nor a participant of this project.',
         });
+    }
+  }
+
+  @UseGuards(AuthenticatedGuard)
+  @Post(':id/comments')
+  async createComment(
+    @Param('id', IdValidationPipe) issueId: number,
+    @Body(ValidationPipe) createCommentDto: CreateCommentDto,
+    @Request() request: ExpressRequest,
+  ) {
+    const { id: userId, permission } = request.user as SessionUser;
+    const result = await this.issuesService.createComment(
+      issueId,
+      createCommentDto,
+      userId,
+      permission,
+    );
+
+    if (result === OperationResult.NotFound) {
+      throw new NotFoundException({
+        message: 'The issue does not exist.',
+      });
     }
   }
 }
