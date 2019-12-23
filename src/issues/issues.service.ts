@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Issue } from './issues.entity'
+import { Issue, Status } from './issues.entity'
 import { CreateIssueDto } from './dto/create-issue.dto';
 import { ReadIssueDto } from './dto/read-issue.dto';
 import { UpdateIssueDto } from './dto/update-issue.dto';
@@ -182,5 +182,39 @@ export class IssuesService {
     ]);
 
     return [OperationResult.Success, Resource.Issue];
+  }
+
+  async closeOneById(
+    issueId: number,
+    userId: number,
+    permission: Permission,
+  ): Promise<OperationResult>
+  {
+    const issue = await this.issueRepository
+      .createQueryBuilder('issue')
+      .leftJoinAndSelect('issue.owner', 'owner')
+      .leftJoinAndSelect('issue.project', 'project')
+      .leftJoinAndSelect('project.participants', 'participant')
+      .where('issue.id = :issueId', { issueId })
+      .select(['issue.id', 'project.id', 'owner.id', 'participant.id'])
+      .getOne();
+
+    if (!issue) {
+      return OperationResult.NotFound;
+    }
+
+    const { owner, project } = issue;
+    const isOwner = owner.id === userId;
+    const isParticipant = project.participants.some(user => user.id === userId);
+    const isAdmin = permission === Permission.Admin;
+    if (!isOwner && !isParticipant && !isAdmin) {
+      return OperationResult.Forbidden;
+    }
+
+    await this.issueRepository.update({ id: issueId }, {
+      status: Status.Closed,
+    });
+
+    return OperationResult.Success;
   }
 }
