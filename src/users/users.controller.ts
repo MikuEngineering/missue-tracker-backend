@@ -7,7 +7,6 @@ import {
   Body,
   Param,
   Query,
-  Response,
   Request,
   HttpStatus,
   HttpCode,
@@ -17,7 +16,7 @@ import {
   BadRequestException,
   ConflictException,
 } from '@nestjs/common';
-import { Request as ExpressRequest, Response as ExpressResponse } from 'express';
+import { Request as ExpressRequest } from 'express';
 import { UsersService } from './users.service';
 import { Permission } from './users.entity';
 import { RegisterUserDto } from './dto/register-user.dto';
@@ -132,5 +131,28 @@ export class UsersController {
     }
 
     return { projects: projectIds };
+  }
+
+  @Get(':id/issues')
+  async readAllIssues(
+    @Param('id', IdValidationPipe) targetUserId: number,
+    @Request() request: ExpressRequest,
+  ) {
+    const user: SessionUser | undefined = request.user as SessionUser;
+    const userId: number | undefined = user && user.id;
+    const permission: Permission | undefined = user && user.permission;
+    const [result, issueIds] = await this.usersService.readAllIssues(
+      targetUserId,
+      userId,
+      permission,
+    );
+
+    if (result === OperationResult.NotFound) {
+      throw new NotFoundException({
+        message: 'The user does not exist.',
+      });
+    }
+
+    return { issues: issueIds };
   }
 }
