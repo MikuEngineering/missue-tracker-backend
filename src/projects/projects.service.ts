@@ -109,7 +109,9 @@ export class ProjectsService {
     permission: Permission | undefined
   ): Promise<[OperationResult, ReadProjectDto?]>
   {
-    const project = await this.projectRepository.findOne(projectId, { relations: ['participants', 'tags'] });
+    const project = await this.projectRepository.findOne(projectId, {
+      relations: ['participants', 'tags', 'owner']
+    });
 
     const isNotFound = !project;
     if (isNotFound) {
@@ -125,6 +127,7 @@ export class ProjectsService {
 
     const readProjectDto = new ReadProjectDto();
     readProjectDto.name = project.name;
+    readProjectDto.ownerId = project.owner.id;
     readProjectDto.description = project.description;
     readProjectDto.privacy = project.privacy;
     readProjectDto.tags = project.tags.map(tag => tag.name);
