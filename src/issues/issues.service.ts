@@ -253,4 +253,35 @@ export class IssuesService {
     });
     return OperationResult.Success;
   }
+
+  async readAllComments(
+    issueId: number,
+    userId: number,
+    permission: Permission,
+  ): Promise<[OperationResult, number[]?]>
+  {
+    const issue = await this.issueRepository
+      .createQueryBuilder('issue')
+      .leftJoinAndSelect('issue.project', 'project')
+      .leftJoinAndSelect('issue.comments', 'comments')
+      .leftJoinAndSelect('project.participants', 'participant')
+      .where('issue.id = :issueId', { issueId })
+      .select(['issue.id', 'project.id', 'project.privacy', 'participant.id', 'comments.id'])
+      .getOne();
+
+    if (!issue) {
+      return [OperationResult.NotFound, null];
+    }
+
+    const { project } = issue;
+    const isPrivate = project.privacy === Privacy.Private;
+    const isParticipant = project.participants.some(user => user.id === userId);
+    const isAdmin = permission === Permission.Admin;
+    if (!isAdmin && isPrivate && !isParticipant) {
+      return [OperationResult.NotFound, null];
+    }
+
+    const commentIds = issue.comments.map(comment => comment.id);
+    return [OperationResult.Success, commentIds];
+  }
 }

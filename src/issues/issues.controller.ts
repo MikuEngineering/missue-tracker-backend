@@ -141,4 +141,27 @@ export class IssuesController {
       });
     }
   }
+
+  @Get(':id/comments')
+  async readAllComment(
+    @Param('id', IdValidationPipe) issueId: number,
+    @Request() request: ExpressRequest,
+  ) {
+    const user: SessionUser | undefined = request.user as SessionUser;
+    const userId: number | undefined = user && user.id;
+    const permission: Permission | undefined = user && user.permission;
+    const [result, commentIds] = await this.issuesService.readAllComments(
+      issueId,
+      userId,
+      permission,
+    );
+
+    if (result === OperationResult.NotFound) {
+      throw new NotFoundException({
+        message: 'The issue does not exist.',
+      });
+    }
+
+    return { comments: commentIds };
+  }
 }
