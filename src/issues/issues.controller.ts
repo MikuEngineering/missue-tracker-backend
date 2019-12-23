@@ -1,4 +1,17 @@
-import { Controller, Get, Put, Param, Body, Request, UseGuards, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Put,
+  Delete,
+  Param,
+  Body,
+  Request,
+  HttpStatus,
+  HttpCode,
+  UseGuards,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { Request as ExpressRequest } from 'express';
 import { IssuesService } from './issues.service';
 import { UpdateIssueDto } from './dto/update-issue.dto';
@@ -76,6 +89,32 @@ export class IssuesController {
             message: 'Cannot update the issue since one or many of the labels do not belong to the project.',
           });
       }
+    }
+  }
+
+  @UseGuards(AuthenticatedGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Delete(':id')
+  async closeOneById(
+    @Param('id', IdValidationPipe) issueId: number,
+    @Request() request: ExpressRequest,
+  ) {
+    const { id: userId, permission } = request.user as SessionUser;
+    const result = await this.issuesService.closeOneById(
+      issueId,
+      userId,
+      permission,
+    );
+
+    switch (result) {
+      case OperationResult.NotFound:
+        throw new NotFoundException({
+          message: 'The issue does not exist.',
+        });
+      case OperationResult.Forbidden:
+        throw new NotFoundException({
+          message: 'Cannot close this issue since you are not the owner nor a participant of this project.',
+        });
     }
   }
 }
