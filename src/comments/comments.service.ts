@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { Comment } from './comments.entity';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { ReadCommentDto } from './dto/read-comment.dto';
+import { UpdateCommentDto } from './dto/update-comment.dto';
 import { Permission } from '../users/users.entity';
 import { Privacy } from '../projects/projects.entity';
 import { OperationResult } from '../common/types/operation-result.type';
@@ -61,5 +62,48 @@ export class CommentsService {
       updatedTime: comment.updatedTime.toJSON(),
     };
     return [OperationResult.Success, readCommentDto];
+  }
+
+  async updateOneById(
+    commentId: number,
+    updateCommentDto: UpdateCommentDto,
+    userId: number,
+    permission: Permission,
+  ): Promise<OperationResult>
+  {
+    const comment = await this.commentRepository
+      .createQueryBuilder('comment')
+      .leftJoinAndSelect('comment.owner', 'owner')
+      .leftJoinAndSelect('comment.issue', 'issue')
+      .leftJoinAndSelect('issue.project', 'project')
+      .leftJoinAndSelect('project.participants', 'participant')
+      .where('comment.id = :commentId', { commentId })
+      .select(['comment.id', 'owner.id', 'issue.id', 'project.privacy', 'participant.id'])
+      .getOne();
+
+    if (!comment) {
+      return OperationResult.NotFound;
+    }
+
+    const project = comment.issue.project;
+    const isPublic = project.privacy === Privacy.Public;
+    const isParticipant = project.participants.some(user => user.id === userId);
+    const isOwner = comment.owner.id === userId;
+    const isAdmin = permission === Permission.Admin;
+    if (isPublic) {
+      if (!isOwner && !isAdmin) {
+        return OperationResult.Forbidden;
+      }
+    }
+    else {
+      if (!isOwner && !isAdmin) {
+        return isParticipant ? OperationResult.Forbidden : OperationResult.NotFound;
+      }
+    }
+
+    await this.commentRepository.update({ id: userId }, {
+      content: updateCommentDto.content,
+    });
+    return OperationResult.Success;
   }
 }
