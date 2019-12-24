@@ -48,7 +48,7 @@ export class IssuesController {
 
     if (result === OperationResult.NotFound) {
       throw new NotFoundException({
-        message: 'The project does not exist.',
+        message: 'The issue does not exist.',
       });
     }
 
