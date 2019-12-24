@@ -14,6 +14,7 @@ import { SessionModule } from './session/session.module';
 import { LabelsModule } from './labels/labels.module';
 import { IssuesModule } from './issues/issues.module';
 import { CommentsModule } from './comments/comments.module';
+import { QueryModule } from './query/query.module';
 
 const {
   DB_HOST,
@@ -49,6 +50,7 @@ const {
     LabelsModule,
     IssuesModule,
     CommentsModule,
+    QueryModule,
   ],
 })
 export class AppModule {}
