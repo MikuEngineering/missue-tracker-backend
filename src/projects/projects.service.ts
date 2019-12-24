@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Not, Brackets } from 'typeorm';
+import { Repository, Not, Brackets, Like } from 'typeorm';
 import { Project, Status, Privacy } from './projects.entity';
 
 import { CreateProjectDto } from './dto/create-project.dto';
@@ -566,5 +566,16 @@ export class ProjectsService {
 
     const issueIds = project.issues.map(issue => issue.id);
     return [OperationResult.Success, issueIds];
+  }
+
+  async searchManyByName(name: string): Promise<number[]> {
+    const projects = await this.projectRepository
+      .createQueryBuilder('project')
+      .where('project.name LIKE :name', { name: `%${name}%` })
+      .select('project.id')
+      .getMany();
+
+      const projectIds = projects.map(project => project.id);
+      return projectIds;
   }
 }
