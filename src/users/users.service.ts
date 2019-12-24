@@ -58,7 +58,12 @@ export class UsersService {
     readProfileDto.autobiography = user.autobiography;
     readProfileDto.permission = user.permission;
     readProfileDto.status = user.status;
-    readProfileDto.lineToken = user.lineToken;
+
+    let lineToken = null;
+    if (user.lineToken) {
+      lineToken = Buffer.from(user.lineToken, 'base64').toString('utf-8');
+    }
+    readProfileDto.lineToken = lineToken;
 
     return readProfileDto;
   }
@@ -68,11 +73,16 @@ export class UsersService {
       return false;
     }
 
+    let lineToken = null;
+    if (updateProfileDto.lineToken) {
+      lineToken = Buffer.from(updateProfileDto.lineToken).toString('base64');
+    }
+
     await this.userRepository.update({ id: userId }, {
       nickname: updateProfileDto.nickname,
       autobiography: updateProfileDto.autobiography,
       email: updateProfileDto.email,
-      lineToken: updateProfileDto.lineToken || null,
+      lineToken: lineToken,
     });
 
     return true;
