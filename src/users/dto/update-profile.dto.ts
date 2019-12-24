@@ -1,4 +1,4 @@
-import { MaxLength, IsString, IsEmail } from 'class-validator';
+import { MaxLength, IsString, IsEmail, IsIn } from 'class-validator';
 
 export class UpdateProfileDto {
   @IsString({
@@ -21,4 +21,6 @@ export class UpdateProfileDto {
     message: 'The format of your email address is invalid.'
   })
   readonly email: string;
+
+  readonly lineToken: string;
 }
