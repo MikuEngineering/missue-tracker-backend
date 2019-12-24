@@ -568,14 +568,26 @@ export class ProjectsService {
     return [OperationResult.Success, issueIds];
   }
 
-  async searchManyByName(name: string): Promise<number[]> {
-    const projects = await this.projectRepository
+  async searchManyByName(
+    name: string,
+    userId?: number,
+    permission?: Permission
+  ): Promise<number[]> {
+    const query = this.projectRepository
       .createQueryBuilder('project')
-      .where('project.name LIKE :name', { name: `%${name}%` })
-      .select('project.id')
-      .getMany();
+      .leftJoinAndSelect('project.participants', 'participant')
+      .where('project.name LIKE :name', { name: `%${name}%` });
 
-      const projectIds = projects.map(project => project.id);
-      return projectIds;
+    if (permission !== Permission.Admin) {
+      query.andWhere(new Brackets((qb) => {
+        qb.where('project.privacy = :public', { public: Privacy.Public })
+          .orWhere('participant.id = :userId', { userId })
+      }));
+    }
+
+    const projects = await query.select('project.id').getMany();
+
+    const projectIds = projects.map(project => project.id);
+    return projectIds;
   }
 }
