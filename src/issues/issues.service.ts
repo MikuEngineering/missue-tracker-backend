@@ -6,7 +6,7 @@ import { CreateIssueDto } from './dto/create-issue.dto';
 import { ReadIssueDto } from './dto/read-issue.dto';
 import { UpdateIssueDto } from './dto/update-issue.dto';
 import { CreateCommentDto as LocalCreateCommentDto } from './dto/create-comment.dto';
-import { Privacy } from '../projects/projects.entity';
+import { Privacy, Project } from '../projects/projects.entity';
 import { Resource } from '../common/types/resource.type';
 import { CommentsService } from '../comments/comments.service';
 import { CreateCommentDto } from '../comments/dto/create-comment.dto';
@@ -284,5 +284,75 @@ export class IssuesService {
 
     const commentIds = issue.comments.map(comment => comment.id);
     return [OperationResult.Success, commentIds];
+  }
+
+  async searchManyByTitle(
+    title: string,
+    userId?: number,
+    permission?: Permission,
+  ): Promise<number[]>
+  {
+    const issues = await this.issueRepository
+      .createQueryBuilder('issue')
+      .leftJoinAndSelect('issue.project', 'project')
+      .where('issue.title LIKE :title', { title: `%${title}%` })
+      .select(['issue.id', 'project.id', 'project.privacy'])
+      .getMany();
+
+    if (permission === Permission.Admin) {
+      return issues.map(issue => issue.id);
+    }
+
+    const issueProjectPairs = issues.map((issue) => {
+      return {
+        issueId: issue.id,
+        projectId: issue.project.id,
+        isPublic: issue.project.privacy === Privacy.Public,
+      };
+    });
+
+    const uniqueProjectIds: number[] = [];
+    issues.forEach((issue) => {
+      const { project } = issue;
+      if (!uniqueProjectIds.some(id => project.id === id)) {
+        uniqueProjectIds.push(project.id);
+      }
+    });
+
+    const projectVisibilityMap = await this.checkProjectsVisible(
+      uniqueProjectIds,
+      userId,
+    );
+    
+    const visibleIssueIds: number[] = issueProjectPairs.reduce((list, item) => {
+      if (item.isPublic || projectVisibilityMap[item.projectId]) {
+        list.push(item.issueId);
+      }
+      return list;
+    }, []);
+
+    return visibleIssueIds;
+  }
+
+  private async checkProjectsVisible(projectIds: number[], userId: number) {
+    const manager = this.issueRepository.manager;
+    const projectRepository = manager.getRepository(Project);
+
+    const visibilityMap: { [key: number]: boolean } = {};
+    async function check(projectId: number) {
+      const count = await projectRepository
+        .createQueryBuilder('project')
+        .leftJoinAndSelect('project.participants', 'participant')
+        .where('participant.id = :userId', { userId })
+        .andWhere('project.id = :projectId', { projectId })
+        .getCount();
+
+      visibilityMap[projectId] = count > 0;
+    }
+
+    const allCheckingPromises = projectIds.map(check);
+    await Promise.all(allCheckingPromises);
+
+    return visibilityMap;
   }
 }
