@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { hash } from 'argon2';
 import { User, Status, Permission } from './users.entity';
 import { Repository } from 'typeorm';
 import { RegisterUserDto } from './dto/register-user.dto';
@@ -26,8 +27,10 @@ export class UsersService {
       return false;
     }
 
+    const hashedPassword = await hash(password);
+
     const newUser = await this.userRepository.create({
-      username, password, nickname,
+      username, nickname, password: hashedPassword,
     });
     await this.userRepository.save(newUser);
 

@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { verify } from 'argon2';
 import { UsersService } from '../users/users.service';
 import { Status } from '../users/users.entity';
 import { ValidateUserDto } from './dto/validate-user.dto';
@@ -15,7 +16,13 @@ export class AuthService {
       return [LoginResult.Forbidden, null];
     }
 
-    if (user && user.password === password) {
+    let matchPassword = false;
+    try {
+      matchPassword = await verify(user.password, password);
+    }
+    catch (err) {}
+
+    if (user && matchPassword) {
       const { password, ...result } = user;
       return [LoginResult.Success, result];
     }
