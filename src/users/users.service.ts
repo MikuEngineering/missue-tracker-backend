@@ -55,6 +55,7 @@ export class UsersService {
     readProfileDto.autobiography = user.autobiography;
     readProfileDto.permission = user.permission;
     readProfileDto.status = user.status;
+    readProfileDto.lineToken = user.lineToken;
 
     return readProfileDto;
   }
@@ -67,7 +68,8 @@ export class UsersService {
     await this.userRepository.update({ id: userId }, {
       nickname: updateProfileDto.nickname,
       autobiography: updateProfileDto.autobiography,
-      email: updateProfileDto.email
+      email: updateProfileDto.email,
+      lineToken: updateProfileDto.lineToken || null,
     });
 
     return true;

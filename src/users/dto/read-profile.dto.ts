@@ -5,6 +5,7 @@ export class ReadProfileDto {
   nickname: string
   email: string
   autobiography: string
+  lineToken: string | null
   permission: Permission
   status: Status
 }
