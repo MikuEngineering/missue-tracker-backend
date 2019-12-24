@@ -12,6 +12,7 @@ import {
 import { Request as ExpressRequest } from 'express';
 import { CommentsService } from './comments.service';
 import { UpdateCommentDto } from './dto/update-comment.dto';
+import { UpdateCommentStatusDto } from './dto/update-comment-status.dto';
 import { Permission } from '../users/users.entity';
 import { AuthenticatedGuard } from '../common/guards/authenticated.guard';
 import { IdValidationPipe } from '../common/pipes/id-validation.pipe';
@@ -71,6 +72,34 @@ export class CommentsController {
       case OperationResult.Forbidden:
         throw new ForbiddenException({
           message: 'Cannot modify this comment since you are not the owner of this comment.',
+        });
+    }
+  }
+
+  @UseGuards(AuthenticatedGuard)
+  @Put(':id/status')
+  async updateStatusById(
+    @Param('id', IdValidationPipe) commentId: number,
+    @Body(ValidationPipe) updateCommentStatusDto: UpdateCommentStatusDto,
+    @Request() request: ExpressRequest,
+  ) {
+    const { id: userId, permission } = request.user as SessionUser;
+    const { status } = updateCommentStatusDto;
+    const result = await this.commentsService.updateStatusById(
+      commentId,
+      status,
+      userId,
+      permission,
+    );
+
+    switch (result) {
+      case OperationResult.NotFound:
+        throw new NotFoundException({
+          message: 'The comment does not exist.',
+        });
+      case OperationResult.Forbidden:
+        throw new ForbiddenException({
+          message: 'Cannot update the status since you are not the project owner.',
         });
     }
   }
