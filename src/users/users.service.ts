@@ -6,6 +6,7 @@ import { Repository } from 'typeorm';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ReadProfileDto } from './dto/read-profile.dto';
+import { InsightReportDto } from './dto/insight-report.dto';
 import { OperationResult } from '../common/types/operation-result.type';
 import { Project, Privacy, Status as ProjectStatus } from '../projects/projects.entity';
 import { Issue } from '../issues/issues.entity';
@@ -231,5 +232,30 @@ export class UsersService {
     const users = await this.userRepository.findByIds(userIds);
     const availableTokens = users.map(user => Buffer.from(user.lineToken, 'base64').toString('utf-8'));
     return availableTokens;
+  }
+
+  async readInsightReport(
+    targetUserId: number,
+    userId: number,
+    permission: Permission,
+  ): Promise<[OperationResult, any?]>
+  {
+    if (targetUserId !== userId && permission !== Permission.Admin) {
+      return [OperationResult.Forbidden, null];
+    }
+
+    const assignedResults: { time: Date, count: number }[] = await this.userRepository.query(`
+      SELECT date(issue.createdTime) AS time , count(*) as count
+      FROM user as user
+      LEFT JOIN user_assigned_issues_issue as assigned
+      ON assigned.userId = user.id
+      LEFT JOIN issue as issue
+      ON assigned.issueId = issue.id
+      WHERE user.id = ?
+      GROUP BY time
+      ORDER BY time DESC;
+    `, [userId, userId]);
+
+    return [OperationResult.Success, assignedResults];
   }
 }

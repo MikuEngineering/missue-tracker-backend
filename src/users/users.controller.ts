@@ -155,4 +155,28 @@ export class UsersController {
 
     return { issues: issueIds };
   }
+
+  @UseGuards(AuthenticatedGuard)
+  @Get(':id/insight')
+  async readInsightChart(
+    @Param('id', IdValidationPipe) targetUserId: number,
+    @Request() request: ExpressRequest,
+  ) {
+    const user: SessionUser | undefined = request.user as SessionUser;
+    const userId: number | undefined = user && user.id;
+    const permission: Permission | undefined = user && user.permission;
+    const [result, report] = await this.usersService.readInsightReport(
+      targetUserId,
+      userId,
+      permission,
+    );
+
+    if (result === OperationResult.Forbidden) {
+      throw new ForbiddenException({
+        message: 'Cannot read the report since you are not the owner.',
+      });
+    }
+
+    return report;
+  }
 }
