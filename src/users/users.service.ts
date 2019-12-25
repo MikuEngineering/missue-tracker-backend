@@ -7,7 +7,7 @@ import { RegisterUserDto } from './dto/register-user.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ReadProfileDto } from './dto/read-profile.dto';
 import { OperationResult } from '../common/types/operation-result.type';
-import { Project, Privacy } from '../projects/projects.entity';
+import { Project, Privacy, Status as ProjectStatus } from '../projects/projects.entity';
 import { Issue } from '../issues/issues.entity';
 
 @Injectable()
@@ -115,7 +115,9 @@ export class UsersService {
       return [OperationResult.NotFound, null];
     }
 
-    const projectIds = user.participatingProjects.map(project => project.id);
+    const projectIds = user.participatingProjects
+      .filter(project => project.status === ProjectStatus.Normal)
+      .map(project => project.id);
 
     return [OperationResult.Success, projectIds];
   }
