@@ -7,6 +7,7 @@ import { TagsModule } from '../tags/tags.module';
 import { UsersModule } from '../users/users.module';
 import { LabelsModule } from '../labels/labels.module';
 import { IssuesModule } from '../issues/issues.module';
+import { NotifierModule } from '../notifier/notifier.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { IssuesModule } from '../issues/issues.module';
     TagsModule,
     LabelsModule,
     IssuesModule,
+    NotifierModule,
   ],
   controllers: [ProjectsController],
   providers: [ProjectsService],

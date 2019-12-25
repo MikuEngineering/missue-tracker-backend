@@ -11,9 +11,9 @@ import { Resource } from '../common/types/resource.type';
 import { CommentsService } from '../comments/comments.service';
 import { CreateCommentDto } from '../comments/dto/create-comment.dto';
 import { Permission } from '../users/users.entity';
+import { NotifierService } from '../notifier/notifier.service';
+import { UsersService } from '../users/users.service';
 import { OperationResult } from '../common/types/operation-result.type';
-
-import { User } from '../users/users.entity';
 
 function wrapIdsIntoObjects(ids: number[]) {
   return ids.map(id => ({ id }));
@@ -23,12 +23,33 @@ function unwrapIdsFromObjects(objects: { id: number }[]) {
   return objects.map(objId => objId.id);
 }
 
+function createNewCommentMessage(
+  projectName: string,
+  issueNumber: number,
+  content: string,
+  username: string
+) {
+  return `[NEW COMMENT]
+# In Project
+${projectName}
+
+# Issue Number
+${issueNumber}
+
+# Content
+${content}
+
+By user: ${username}`;
+}
+
 @Injectable()
 export class IssuesService {
   constructor(
     @InjectRepository(Issue)
     private readonly issueRepository: Repository<Issue>,
     private readonly commentsService: CommentsService,
+    private readonly notifierService: NotifierService,
+    private readonly usersService: UsersService,
   ) { }
 
   async create(createIssueDto: CreateIssueDto) {
@@ -229,10 +250,13 @@ export class IssuesService {
   {
     const issue = await this.issueRepository
       .createQueryBuilder('issue')
+      .leftJoinAndSelect('issue.assignees', 'assignee')
+      .leftJoinAndSelect('issue.owner', 'owner')
       .leftJoinAndSelect('issue.project', 'project')
       .leftJoinAndSelect('project.participants', 'participant')
       .where('issue.id = :issueId', { issueId })
-      .select(['issue.id', 'project.privacy', 'participant.id'])
+      .select(['issue.id', 'issue.number', 'project.name', 'project.privacy',
+        'participant.id', 'assignee.id', 'owner.id'])
       .getOne();
 
     if (!issue) {
@@ -252,6 +276,17 @@ export class IssuesService {
       content: createCommentDto.content,
       issueId: issueId,
     });
+
+    const notifiedIds = [issue.owner.id, ...issue.assignees.map(assignee => assignee.id)];
+    const senderUsername = await this.usersService.readUsernameById(userId);
+    const message = createNewCommentMessage(
+      issue.project.name,
+      issue.number,
+      createCommentDto.content,
+      senderUsername,
+    );
+    await this.notifierService.sendNotificationByUserIds(notifiedIds, message);
+
     return OperationResult.Success;
   }
 

@@ -145,6 +145,10 @@ export class LabelsService {
     projectId: number,
   ): Promise<boolean>
   {
+    if (labelIds.length < 1) {
+      return true;
+    }
+
     const count = await this.labelRepository.count({
       where: {
         id: In(labelIds),

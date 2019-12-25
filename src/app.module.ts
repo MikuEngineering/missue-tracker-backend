@@ -15,6 +15,7 @@ import { LabelsModule } from './labels/labels.module';
 import { IssuesModule } from './issues/issues.module';
 import { CommentsModule } from './comments/comments.module';
 import { QueryModule } from './query/query.module';
+import { NotifierModule } from './notifier/notifier.module';
 
 const {
   DB_HOST,
@@ -51,6 +52,7 @@ const {
     IssuesModule,
     CommentsModule,
     QueryModule,
+    NotifierModule,
   ],
 })
 export class AppModule {}
