@@ -14,6 +14,7 @@ import { Permission, Status as UserStatue } from '../users/users.entity';
 import { TagsService } from '../tags/tags.service';
 import { LabelsService } from '../labels/labels.service';
 import { IssuesService } from '../issues/issues.service';
+import { NotifierService } from '../notifier/notifier.service';
 import { OperationResult } from '../common/types/operation-result.type';
 import { Resource } from '../common/types/resource.type';
 
@@ -24,6 +25,25 @@ const REASON_TARGET_USER_HAS_PROJECT_SAME_NAME = 'The target user has a project 
 
 type Ownership = { name: string, ownerId: number };
 
+function createNewIssueMessage(
+  projectName: string,
+  title: string,
+  content: string,
+  username: string
+) {
+  return `[NEW ISSUE]
+# In Project
+${projectName}
+
+# Title
+${title}
+
+# Content
+${content}
+
+By user: ${username}`;
+}
+
 @Injectable()
 export class ProjectsService {
   constructor(
@@ -33,6 +53,7 @@ export class ProjectsService {
     private readonly userService: UsersService,
     private readonly labelsService: LabelsService,
     private readonly issuesService: IssuesService,
+    private readonly notifierService: NotifierService,
   ) {}
 
   async create(createProjectDto: CreateProjectDto, userId: number): Promise<boolean> {
@@ -537,6 +558,17 @@ export class ProjectsService {
       ownerId: userId,
       projectId
     });
+
+    // Send notifications
+    const notifiedIds = [userId, ...createIssueDto.assignees];
+    const senderUsername = await this.userService.readUsernameById(userId);
+    const message = createNewIssueMessage(
+      project.name,
+      createIssueDto.title,
+      createIssueDto.comment.content,
+      senderUsername,
+    );
+    await this.notifierService.sendNotificationByUserIds(notifiedIds, message);
 
     return [OperationResult.Success, Resource.Issue];
   }

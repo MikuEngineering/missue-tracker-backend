@@ -219,4 +219,15 @@ export class UsersService {
     const visibleIssueIds = visibleItem.map(item => item.issueId);
     return [OperationResult.Success, visibleIssueIds];
   }
+
+  async readUsernameById(userId: number): Promise<string> {
+    const user = await this.userRepository.findOne(userId);
+    return user && user.username;
+  }
+
+  async readLineTokensByIds(userIds: number[]): Promise<string[]> {
+    const users = await this.userRepository.findByIds(userIds);
+    const availableTokens = users.map(user => Buffer.from(user.lineToken, 'base64').toString('utf-8'));
+    return availableTokens;
+  }
 }
