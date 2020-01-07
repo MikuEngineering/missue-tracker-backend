@@ -6,16 +6,21 @@ import { Repository } from 'typeorm';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ReadProfileDto } from './dto/read-profile.dto';
+import { InsightReportDto } from './dto/insight-report.dto';
 import { OperationResult } from '../common/types/operation-result.type';
-import { Project, Privacy, Status as ProjectStatus } from '../projects/projects.entity';
+import {
+  Project,
+  Privacy,
+  Status as ProjectStatus,
+} from '../projects/projects.entity';
 import { Issue } from '../issues/issues.entity';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User)
-    private readonly userRepository: Repository<User>
-  ) { }
+    private readonly userRepository: Repository<User>,
+  ) {}
 
   async register(registerUserDto: RegisterUserDto): Promise<boolean> {
     const username: string = registerUserDto.username;
@@ -30,7 +35,9 @@ export class UsersService {
     const hashedPassword = await hash(password);
 
     const newUser = await this.userRepository.create({
-      username, nickname, password: hashedPassword,
+      username,
+      nickname,
+      password: hashedPassword,
     });
     await this.userRepository.save(newUser);
 
@@ -68,7 +75,10 @@ export class UsersService {
     return readProfileDto;
   }
 
-  async updateProfile(updateProfileDto: UpdateProfileDto, userId: number): Promise<boolean> {
+  async updateProfile(
+    updateProfileDto: UpdateProfileDto,
+    userId: number,
+  ): Promise<boolean> {
     if (!(await this.checkUserExistenceById(userId))) {
       return false;
     }
@@ -78,12 +88,15 @@ export class UsersService {
       lineToken = Buffer.from(updateProfileDto.lineToken).toString('base64');
     }
 
-    await this.userRepository.update({ id: userId }, {
-      nickname: updateProfileDto.nickname,
-      autobiography: updateProfileDto.autobiography,
-      email: updateProfileDto.email,
-      lineToken: lineToken,
-    });
+    await this.userRepository.update(
+      { id: userId },
+      {
+        nickname: updateProfileDto.nickname,
+        autobiography: updateProfileDto.autobiography,
+        email: updateProfileDto.email,
+        lineToken: lineToken,
+      },
+    );
 
     return true;
   }
@@ -106,10 +119,15 @@ export class UsersService {
     return true;
   }
 
-  async readAllProjectIdsById(userId: number): Promise<[OperationResult, number[]]> {
-    const user = await this.userRepository.findOne({ id: userId }, {
-      relations: ['participatingProjects']
-    });
+  async readAllProjectIdsById(
+    userId: number,
+  ): Promise<[OperationResult, number[]]> {
+    const user = await this.userRepository.findOne(
+      { id: userId },
+      {
+        relations: ['participatingProjects'],
+      },
+    );
 
     if (!user) {
       return [OperationResult.NotFound, null];
@@ -131,8 +149,7 @@ export class UsersService {
     targetUserId: number,
     userId?: number,
     permission?: Permission,
-  ): Promise<[OperationResult, number[]?]>
-  {
+  ): Promise<[OperationResult, number[]?]> {
     const user = await this.userRepository
       .createQueryBuilder('user')
       .leftJoinAndSelect('user.assignedIssues', 'assignedIssues')
@@ -164,7 +181,8 @@ export class UsersService {
 
     // Get relationship between issues and projects
     const manager = this.userRepository.manager;
-    const uniqueIssuesProjects = await manager.createQueryBuilder(Issue, 'issue')
+    const uniqueIssuesProjects = await manager
+      .createQueryBuilder(Issue, 'issue')
       .leftJoinAndSelect('issue.project', 'project')
       .select(['issue.id', 'project.id', 'project.privacy'])
       .where('issue.id IN :set', { set: [uniqueIssueIds] })
@@ -179,7 +197,7 @@ export class UsersService {
 
     // Make unique project id list.
     const uniqueProjects = [];
-    issueProjectList.forEach((item) => {
+    issueProjectList.forEach(item => {
       const { projectId, isPublic } = item;
       if (!uniqueProjects.some(item => item.id === projectId)) {
         uniqueProjects.push({ projectId, isPublic });
@@ -190,12 +208,14 @@ export class UsersService {
     const projectParticipationMap = {};
 
     async function checkParticipant({ projectId, isPublic }) {
-      if (isPublic) { // The project is public
+      if (isPublic) {
+        // The project is public
         projectParticipationMap[projectId] = true;
         return;
       }
 
-      if (!userId) {  // The project is private and the user has not logged in.
+      if (!userId) {
+        // The project is private and the user has not logged in.
         projectParticipationMap[projectId] = false;
         return;
       }
@@ -210,11 +230,13 @@ export class UsersService {
       });
       projectParticipationMap[projectId] = count > 0;
     }
-    const checkParticipantProcesses = uniqueProjects.map(item => checkParticipant(item));
+    const checkParticipantProcesses = uniqueProjects.map(item =>
+      checkParticipant(item),
+    );
     await Promise.all(checkParticipantProcesses);
 
     // Filter out invisible issues.
-    const visibleItem = issueProjectList.filter((pair) => {
+    const visibleItem = issueProjectList.filter(pair => {
       return projectParticipationMap[pair.projectId];
     });
 
@@ -229,7 +251,43 @@ export class UsersService {
 
   async readLineTokensByIds(userIds: number[]): Promise<string[]> {
     const users = await this.userRepository.findByIds(userIds);
-    const availableTokens = users.map(user => Buffer.from(user.lineToken, 'base64').toString('utf-8'));
+    const availableTokens = users.map(user =>
+      Buffer.from(user.lineToken, 'base64').toString('utf-8'),
+    );
     return availableTokens;
+  }
+
+  async readInsightReport(
+    targetUserId: number,
+    userId: number,
+    permission: Permission,
+  ): Promise<[OperationResult, any?]> {
+    if (targetUserId !== userId && permission !== Permission.Admin) {
+      return [OperationResult.Forbidden, null];
+    }
+
+    const assignedResults: {
+      time: Date;
+      count: number;
+    }[] = await this.userRepository.query(
+      `
+      SELECT date(issue.createdTime) AS time , count(*) as count
+      FROM user as user
+      LEFT JOIN user_assigned_issues_issue as assigned
+      ON assigned.userId = user.id
+      LEFT JOIN issue as issue
+      ON assigned.issueId = issue.id
+      WHERE user.id = ?
+      GROUP BY time
+      ORDER BY time DESC;
+    `,
+      [targetUserId],
+    );
+
+    if (assignedResults.length === 1 && assignedResults[0].time === null) {
+      return [OperationResult.Success, []];
+    }
+
+    return [OperationResult.Success, assignedResults];
   }
 }

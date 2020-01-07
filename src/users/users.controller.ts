@@ -23,14 +23,14 @@ import { RegisterUserDto } from './dto/register-user.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { AuthenticatedGuard } from '../common/guards/authenticated.guard';
 import { AdminGuard } from '../common/guards/admin.guard';
-import { ValidationPipe } from '../common/pipes/validation.pipe'
+import { ValidationPipe } from '../common/pipes/validation.pipe';
 import { IdValidationPipe } from '../common/pipes/id-validation.pipe';
 import { SessionUser } from '../common/types/session-user.type';
 import { OperationResult } from '../common/types/operation-result.type';
 
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) { }
+  constructor(private readonly usersService: UsersService) {}
 
   @Get()
   async readUsers(@Query('username') username: string) {
@@ -77,7 +77,10 @@ export class UsersController {
       });
     }
 
-    const result = await this.usersService.updateProfile(updateProfileDto, userId);
+    const result = await this.usersService.updateProfile(
+      updateProfileDto,
+      userId,
+    );
     if (!result) {
       throw new NotFoundException({
         message: 'The profile does not exist.',
@@ -122,7 +125,9 @@ export class UsersController {
 
   @Get(':id/projects')
   async readAllProjects(@Param('id', IdValidationPipe) userId: number) {
-    const [result, projectIds] = await this.usersService.readAllProjectIdsById(userId);
+    const [result, projectIds] = await this.usersService.readAllProjectIdsById(
+      userId,
+    );
 
     if (result === OperationResult.NotFound) {
       throw new NotFoundException({
@@ -154,5 +159,29 @@ export class UsersController {
     }
 
     return { issues: issueIds };
+  }
+
+  @UseGuards(AuthenticatedGuard)
+  @Get(':id/insight')
+  async readInsightChart(
+    @Param('id', IdValidationPipe) targetUserId: number,
+    @Request() request: ExpressRequest,
+  ) {
+    const user: SessionUser | undefined = request.user as SessionUser;
+    const userId: number | undefined = user && user.id;
+    const permission: Permission | undefined = user && user.permission;
+    const [result, report] = await this.usersService.readInsightReport(
+      targetUserId,
+      userId,
+      permission,
+    );
+
+    if (result === OperationResult.Forbidden) {
+      throw new ForbiddenException({
+        message: 'Cannot read the report since you are not the owner.',
+      });
+    }
+
+    return { slices: report };
   }
 }
