@@ -10,10 +10,11 @@ services:
         DB_PASSWORD: ${DB_PASSWORD:-mtpassword}
         DB_DATABASE: ${DB_DATABASE:-missue_tracker}
         SESSION_SECRET: ${SESSION_SECRET:-nest secret}
+        LINE_BOT_HOST: ${LINE_BOT_HOST}
     environment:
       WAIT_HOSTS: database:3306
     ports:
-      - "${PORT:-8000}:${PORT:-8000}"
+      - '${PORT:-8000}:${PORT:-8000}'
     expose:
       - ${PORT:-8000}
     depends_on:
@@ -26,6 +27,6 @@ services:
       - MYSQL_PASSWORD=${DB_PASSWORD:-mtpassword}
       - MYSQL_DATABASE=${DB_DATABASE:-missue_tracker}
     ports:
-      - "3306:3306"
+      - '3306:3306'
     expose:
       - 3306
