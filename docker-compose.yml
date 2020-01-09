@@ -10,7 +10,7 @@ services:
         DB_PASSWORD: ${DB_PASSWORD:-mtpassword}
         DB_DATABASE: ${DB_DATABASE:-missue_tracker}
         SESSION_SECRET: ${SESSION_SECRET:-nest secret}
-        LINE_BOT_HOST: ${LINE_BOT_HOST}
+        LINE_BOT_HOST: linebot
     environment:
       WAIT_HOSTS: database:3306
     ports:
