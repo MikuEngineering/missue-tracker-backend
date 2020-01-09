@@ -251,21 +251,13 @@ export class UsersService {
 
   async readLineTokensByIds(userIds: number[]): Promise<string[]> {
     const users = await this.userRepository.findByIds(userIds);
-    const availableTokens = users.map(user =>
-      Buffer.from(user.lineToken, 'base64').toString('utf-8'),
-    );
+    const availableTokens = users
+      .filter(user => user.lineToken)
+      .map(user => Buffer.from(user.lineToken, 'base64').toString('utf-8'));
     return availableTokens;
   }
 
-  async readInsightReport(
-    targetUserId: number,
-    userId: number,
-    permission: Permission,
-  ): Promise<[OperationResult, any?]> {
-    if (targetUserId !== userId && permission !== Permission.Admin) {
-      return [OperationResult.Forbidden, null];
-    }
-
+  async readInsightReport(targetUserId: number): Promise<any> {
     const assignedResults: {
       time: Date;
       count: number;
@@ -285,9 +277,9 @@ export class UsersService {
     );
 
     if (assignedResults.length === 1 && assignedResults[0].time === null) {
-      return [OperationResult.Success, []];
+      return [];
     }
 
-    return [OperationResult.Success, assignedResults];
+    return assignedResults;
   }
 }
